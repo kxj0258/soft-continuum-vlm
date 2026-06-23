@@ -128,7 +128,14 @@ def test_feagine_env_uses_real_runtime_calls_for_reset_and_step() -> None:
         }[name]
 
     env = FeagineMujocoEnv(
-        {"env": {"robot_preset": "a03_type_2", "asset_model_type": "mjcf", "max_episode_steps": 2}},
+        {
+            "env": {
+                "robot_preset": "a03_type_2",
+                "asset_model_type": "mjcf",
+                "max_episode_steps": 2,
+                "render_mode": "none",
+            }
+        },
         import_module=import_module,
     )
     observation = env.reset(language="pick the red object")

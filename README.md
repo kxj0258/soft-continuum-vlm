@@ -9,7 +9,7 @@
 ## 当前进度
 
 - Milestone 0：项目骨架和 Feagine 安装验证已完成。
-- Milestone 1：Feagine MuJoCo headless wrapper 已完成最小 reset/step。
+- Milestone 1：Feagine MuJoCo wrapper 已完成最小 reset/step，并支持默认 human viewer 与 headless 覆盖。
 - Milestone 2：四个任务已有确定性评估逻辑。
 - Milestone 3：PCC IK / scripted expert / safety projector 已有最小可测试控制路径。
 - Milestone 4：mock scripted expert 数据采集管线已可生成 `.npz` demo 和 metadata。
@@ -64,10 +64,16 @@ python scripts/verify_feagine_install.py
 pytest
 ```
 
-运行 headless MuJoCo demo：
+运行 MuJoCo human viewer demo：
 
 ```bash
 python scripts/run_demo_env.py
+```
+
+无窗口运行同一个 demo：
+
+```bash
+python scripts/run_demo_env.py --headless
 ```
 
 运行 mock 专家数据采集：

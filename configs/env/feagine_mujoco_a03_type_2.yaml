@@ -3,7 +3,7 @@ env:
   runtime: mujoco
   robot_preset: a03_type_2
   asset_model_type: mjcf
-  render_mode: none
+  render_mode: human
   max_episode_steps: 200
   physics_steps_per_action: 4
   feagine_root_env: FEAGINE_SIM_ROOT

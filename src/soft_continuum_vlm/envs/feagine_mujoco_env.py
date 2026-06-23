@@ -17,7 +17,7 @@ ImportModule = Callable[[str], Any]
 class FeagineMujocoConfig:
     robot_preset: str = "a03_type_2"
     asset_model_type: str = "mjcf"
-    render_mode: str = "none"
+    render_mode: str = "human"
     max_episode_steps: int = 200
     physics_steps_per_action: int = 4
     language: str = ""
@@ -39,6 +39,7 @@ class FeagineMujocoEnv(BaseRobotEnv):
         self._model: Any | None = None
         self._data: Any | None = None
         self._robot: Any | None = None
+        self._viewer: Any | None = None
         self._resolved_preset_id: str | None = None
         self._step_count = 0
         self._closed = False
@@ -84,6 +85,7 @@ class FeagineMujocoEnv(BaseRobotEnv):
         self._last_action = {}
         self._load_runtime()
         self._forward()
+        self._ensure_viewer()
         self._observation = self._make_observation(language)
         return self.get_observation()
 
@@ -103,6 +105,7 @@ class FeagineMujocoEnv(BaseRobotEnv):
         self._step_count += 1
         self._last_action = dict(action)
         self._observation = self._make_observation(self._observation["language"])
+        self._sync_viewer()
         done = self._step_count >= self.config.max_episode_steps
         info = {
             "runtime": "feagine_mujoco",
@@ -114,9 +117,13 @@ class FeagineMujocoEnv(BaseRobotEnv):
         return self.get_observation(), 0.0, done, info
 
     def render(self) -> Any:
+        self._sync_viewer()
         return self._observation["rgb"]
 
     def close(self) -> None:
+        if self._viewer is not None and hasattr(self._viewer, "close"):
+            self._viewer.close()
+        self._viewer = None
         self._closed = True
 
     def get_observation(self) -> Observation:
@@ -218,6 +225,31 @@ class FeagineMujocoEnv(BaseRobotEnv):
             return
         self.ensure_runtime_available()["mujoco"].mj_forward(self._model, self._data)
 
+    def _ensure_viewer(self) -> None:
+        if self.config.render_mode != "human" or self._viewer is not None:
+            return
+        if self._model is None or self._data is None:
+            return
+        mujoco = self.ensure_runtime_available()["mujoco"]
+        viewer_module = getattr(mujoco, "viewer", None)
+        if viewer_module is None:
+            viewer_module = self._import_module("mujoco.viewer")
+        launch_passive = getattr(viewer_module, "launch_passive", None)
+        if launch_passive is None:
+            raise RuntimeError("MuJoCo human render mode requires mujoco.viewer.launch_passive.")
+        try:
+            self._viewer = launch_passive(self._model, self._data)
+        except Exception as exc:
+            raise RuntimeError(
+                "Failed to start MuJoCo human viewer. If this machine has no display "
+                "or you are running a batch job, rerun the command with --headless "
+                "or set render_mode: none."
+            ) from exc
+
+    def _sync_viewer(self) -> None:
+        if self._viewer is not None and hasattr(self._viewer, "sync"):
+            self._viewer.sync()
+
     @staticmethod
     def _parse_config(
         config: Mapping[str, Any] | FeagineMujocoConfig | None,
@@ -229,7 +261,7 @@ class FeagineMujocoEnv(BaseRobotEnv):
         return FeagineMujocoConfig(
             robot_preset=str(env_config.get("robot_preset", "a03_type_2")),
             asset_model_type=str(env_config.get("asset_model_type", "mjcf")),
-            render_mode=str(env_config.get("render_mode", "none")),
+            render_mode=str(env_config.get("render_mode", "human")),
             max_episode_steps=int(env_config.get("max_episode_steps", 200)),
             physics_steps_per_action=int(env_config.get("physics_steps_per_action", 4)),
             language=str(env_config.get("language", "")),

@@ -63,8 +63,9 @@ performed in the environment wrapper.
 ### Verification
 Run runtime wrapper tests with fake MuJoCo modules, then run
 `python scripts/verify_feagine_install.py`, `python scripts/run_demo_env.py`,
-and `pytest` in the `feagine_vlm` environment. `run_demo_env.py` must be
-headless and must not open a MuJoCo graphics window.
+and `pytest` in the `feagine_vlm` environment. `run_demo_env.py` opens the
+MuJoCo human viewer by default for local inspection, and `--headless` must keep
+the same smoke check available without a graphics window.
 
 ### Risks and fallback
 Risk: the installed wheel stores the `a03_type_2` preset metadata inside the
