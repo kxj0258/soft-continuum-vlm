@@ -1,0 +1,17 @@
+evaluation:
+  env: mock
+  tasks:
+    - pick_red_object
+    - obstacle_avoid_pick
+    - contact_push
+    - rotate_and_place
+  baselines:
+    - scripted_expert
+    - adapter
+    - vlm_planner_ik
+  num_episodes: 3
+  max_steps: 60
+  outputs:
+    json: outputs/metrics/baseline_debug.json
+    csv: outputs/metrics/baseline_debug.csv
+    figures: outputs/figures

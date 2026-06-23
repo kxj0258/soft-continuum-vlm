@@ -1,6 +1,14 @@
 method:
   name: vlm_planner_ik
-  planner: deterministic_stub
+  planner: deterministic_vlm_planner
   controller: pcc_ik
   safety_projector: enabled
   external_weights: disabled
+  default_contact_force_limit: 1.0
+  gentle_contact_force_limit: 0.5
+  phase_timeout: 20
+  safety_limits:
+    max_abs_section_angle: 0.3
+    max_gripper_rotation: 1.0
+    max_contact_force: 1.0
+    max_penetration: 0.01

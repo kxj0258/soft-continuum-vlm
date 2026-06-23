@@ -192,6 +192,12 @@ planner modules, and planner tests.
 ### Verification
 Run deterministic planner tests with no network access and no model downloads.
 
+Milestone 6 implementation note: `DeterministicVLMPlanner` parses Chinese and
+English color/action/safety keywords into structured subgoals and language
+constraints. `VlmPlannerController` composes that output with the existing
+scripted/PCC action path and `SafetyProjector`, while logging planner output,
+selected subgoal, phase, raw action, safe action, and safety info.
+
 ### Risks and fallback
 Risk: real VLM behavior is non-deterministic. Fallback: keep a deterministic
 stub and add real model adapters only behind explicit fixtures.
@@ -234,6 +240,12 @@ utilities.
 ### Verification
 Run a small deterministic evaluation suite and regenerate at least one table or
 plot from logged data.
+
+Milestone 8 implementation note: `evaluate_baselines.py` runs mock-env episodes
+for `scripted_expert`, `adapter`, and `vlm_planner_ik`; `evaluation.metrics`
+aggregates success, reward, contact, penetration, and collision metrics; and
+`export_paper_figures.py` writes debug PNG plots plus CSV/Markdown summary
+tables. These artifacts are pipeline checks, not final paper claims.
 
 ### Risks and fallback
 Risk: full evaluation is slow or hardware-dependent. Fallback: keep smoke tests

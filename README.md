@@ -14,12 +14,14 @@
 - Milestone 3：PCC IK / scripted expert / safety projector 已有最小可测试控制路径。
 - Milestone 4：mock scripted expert 数据采集管线已可生成 `.npz` demo 和 metadata。
 - Milestone 5：Soft Embodiment Adapter 已支持 CPU tiny training、checkpoint 和 metrics 输出。
+- Milestone 6：Deterministic VLM planner stub 已能把中英文语言转成结构化子目标和安全约束。
+- Milestone 8：mock baseline evaluation 已能导出 JSON、CSV、PNG 和 Markdown 草稿表格。
 
 尚未完成：
 
-- 真实物体检测或 VLM planner。
+- 真实物体检测或真实 VLM planner。
 - 基于真实 Feagine MuJoCo 场景状态的专家数据批量采集。
-- adapter 的正式训练配置、评估图表和论文级实验统计。
+- adapter 的正式训练配置和论文级实验统计。
 - OpenVLA/OCTO 类 baseline 的真实接入。
 
 ## 目录结构
@@ -101,6 +103,34 @@ python scripts/evaluate_adapter.py \
   --max-steps 30 \
   --mock-env \
   --output outputs/metrics/eval_adapter_debug.json
+```
+
+运行 deterministic VLM planner demo：
+
+```bash
+python scripts/run_vlm_planner_demo.py \
+  --task obstacle_avoid_pick \
+  --language "绕过黑色障碍物，轻轻抓住蓝色圆柱" \
+  --mock-env \
+  --max-steps 60 \
+  --output outputs/rollouts/vlm_planner_debug.json
+```
+
+运行 baseline evaluation 并导出论文草稿图表：
+
+```bash
+python scripts/evaluate_baselines.py \
+  --tasks pick_red_object obstacle_avoid_pick contact_push rotate_and_place \
+  --baselines scripted_expert adapter vlm_planner_ik \
+  --num-episodes 3 \
+  --max-steps 60 \
+  --mock-env \
+  --output outputs/metrics/baseline_debug.json \
+  --csv-output outputs/metrics/baseline_debug.csv
+
+python scripts/export_paper_figures.py \
+  --metrics outputs/metrics/baseline_debug.json \
+  --output-dir outputs/figures
 ```
 
 ## Observation Schema
@@ -191,6 +221,34 @@ action = {
 - `step_id`
 
 metadata 包含 git commit、命令行、seed、task/method/env 配置、action schema 和 observation schema version。
+
+## Deterministic VLM Planner
+
+当前 planner 是 deterministic stub，不调用真实 VLM，也不下载权重。它支持中文和英文关键词规则：
+
+- 颜色：红/蓝/绿/黄/黑，`red/blue/green/yellow/black`
+- 动作：抓取、绕过、推动、旋转、放置，`grasp/avoid/push/rotate/place`
+- 安全约束：轻轻、不要碰、`gentle/gently/avoid`
+
+输出包含 `target_object`、`avoid_objects`、`approach_side`、`grasp_mode`、`contact_force_limit`、`subgoals` 和 `language_constraints`。后续真实 VLM 只需要替换 `BasePlanner.plan()` 实现。
+
+## Evaluation Outputs
+
+`scripts/evaluate_baselines.py` 支持三个 debug baseline：
+
+- `scripted_expert`：复用现有 scripted/PCC 控制路径。
+- `adapter`：没有 checkpoint 时使用随机初始化 policy 并记录 warning。
+- `vlm_planner_ik`：语言 planner + scripted/PCC + safety projector。
+
+`scripts/export_paper_figures.py` 使用 matplotlib 导出：
+
+- `success_rate_by_task.png`
+- `max_contact_force_by_task.png`
+- `penetration_by_task.png`
+- `summary_table.csv`
+- `summary_table.md`
+
+这些 mock-env 指标只用于 pipeline 验证和论文草稿排版，不能作为最终论文结论。
 
 ## 开发约束
 
