@@ -8,7 +8,7 @@ from typing import Any, Mapping
 ACTION_FIELDS = (
     "section_angles",
     "grip_command",
-    "gripper_rotation",
+    "grasper_rotation",
 )
 
 
@@ -46,11 +46,11 @@ class SafetyProjector:
             safe_action["grip_command"] = grip_command
             if grip_command != float(action["grip_command"]):
                 clipped_fields.append("grip_command")
-        if "gripper_rotation" in action:
-            gripper_rotation = self._clip(action["gripper_rotation"], self.limits.max_gripper_rotation)
-            safe_action["gripper_rotation"] = gripper_rotation
-            if gripper_rotation != float(action["gripper_rotation"]):
-                clipped_fields.append("gripper_rotation")
+        if "grasper_rotation" in action:
+            grasper_rotation = self._clip(action["grasper_rotation"], self.limits.max_gripper_rotation)
+            safe_action["grasper_rotation"] = grasper_rotation
+            if grasper_rotation != float(action["grasper_rotation"]):
+                clipped_fields.append("grasper_rotation")
         for passthrough_field in ("joint_targets", "segment_joint_targets"):
             if passthrough_field in action:
                 safe_action[passthrough_field] = action[passthrough_field]
@@ -59,7 +59,7 @@ class SafetyProjector:
         penetration_limited = penetration > self.limits.max_penetration
         blocked_fields: list[str] = []
         if contact_limited or penetration_limited:
-            for field in ("section_angles", "gripper_rotation", "joint_targets", "segment_joint_targets"):
+            for field in ("section_angles", "grasper_rotation", "joint_targets", "segment_joint_targets"):
                 if field in safe_action:
                     blocked_fields.append(field)
                     safe_action.pop(field)

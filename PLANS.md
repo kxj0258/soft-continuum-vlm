@@ -101,7 +101,7 @@ contact-aware action projection.
 ### Inputs and outputs
 Input: robot state, scene state, task spec, and safety limits.
 Output: clipped Feagine action dict with `section_angles`, `grip_command`, and
-`gripper_rotation`.
+`grasper_rotation`.
 
 ### Files to change
 `configs/method/scripted_pcc_ik.yaml`,

@@ -8,7 +8,7 @@ def zero_feagine_action(section_count: int) -> dict[str, object]:
     return {
         "section_angles": [0.0] * (2 * section_count),
         "grip_command": 0.0,
-        "gripper_rotation": 0.0,
+        "grasper_rotation": 0.0,
     }
 
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 
-ACTION_KEYS = ("section_angles", "grip_command", "gripper_rotation")
+ACTION_KEYS = ("section_angles", "grip_command", "grasper_rotation")
 
 
 def decode_feagine_action(values: Sequence[float], *, section_count: int = 3) -> dict[str, object]:
@@ -13,7 +13,7 @@ def decode_feagine_action(values: Sequence[float], *, section_count: int = 3) ->
     return {
         "section_angles": [float(value) for value in values[: 2 * section_count]],
         "grip_command": float(values[-2]),
-        "gripper_rotation": float(values[-1]),
+        "grasper_rotation": float(values[-1]),
     }
 
 

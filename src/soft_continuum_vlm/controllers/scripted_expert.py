@@ -18,10 +18,12 @@ class ScriptedExpert:
         self.safety_projector = safety_projector
 
     def act(self, observation: Mapping[str, Any]) -> tuple[dict[str, float], dict[str, Any]]:
-        robot_state = {"proprioception": observation.get("proprioception", [])}
+        robot_state = dict(observation.get("robot_state", {})) if isinstance(observation.get("robot_state"), Mapping) else {}
+        if not robot_state:
+            robot_state = {"proprioception": observation.get("proprioception", [])}
         action = self.controller.compute_action(target_state={}, robot_state=robot_state)
         info: dict[str, Any] = {
-            "source": "scripted_stub",
+            "source": "scripted_pcc_ik",
             "deferred_note": (
                 "Expected input: scene state, task spec, and robot state. Expected "
                 "output: safe expert continuum action. Integration path: add PCC IK "
@@ -30,6 +32,13 @@ class ScriptedExpert:
         }
         if self.safety_projector is None:
             return action, info
-        safe_action, safety_info = self.safety_projector.project(action)
+        contact = observation.get("contact", {})
+        contact_force = float(contact.get("max_force", 0.0)) if isinstance(contact, Mapping) else 0.0
+        penetration = float(contact.get("max_penetration", 0.0)) if isinstance(contact, Mapping) else 0.0
+        safe_action, safety_info = self.safety_projector.project(
+            action,
+            contact_force=contact_force,
+            penetration=penetration,
+        )
         info["safety"] = safety_info
         return safe_action, info
