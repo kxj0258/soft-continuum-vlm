@@ -18,6 +18,8 @@ class FeagineMujocoConfig:
     robot_preset: str = "a03_type_2"
     asset_model_type: str = "mjcf"
     render_mode: str = "human"
+    visual_preset: str = "debug_bright"
+    viewer_camera: Mapping[str, Any] | None = None
     max_episode_steps: int = 200
     physics_steps_per_action: int = 4
     language: str = ""
@@ -167,6 +169,7 @@ class FeagineMujocoEnv(BaseRobotEnv):
         self._model = model
         self._data = data
         self._robot = robot
+        self._apply_visual_preset()
 
     def _resolve_runtime_preset_id(self, feagine_mujoco: Any) -> str:
         preset_id = self.config.robot_preset
@@ -245,10 +248,42 @@ class FeagineMujocoEnv(BaseRobotEnv):
                 "or you are running a batch job, rerun the command with --headless "
                 "or set render_mode: none."
             ) from exc
+        self._apply_viewer_camera()
 
     def _sync_viewer(self) -> None:
         if self._viewer is not None and hasattr(self._viewer, "sync"):
             self._viewer.sync()
+
+    def _apply_visual_preset(self) -> None:
+        if self._model is None or self.config.visual_preset in {"", "none"}:
+            return
+        if self.config.visual_preset != "debug_bright":
+            raise ValueError(
+                f"Unsupported visual_preset={self.config.visual_preset!r}. "
+                "Supported values are 'debug_bright' and 'none'."
+            )
+        headlight = getattr(getattr(self._model, "vis", None), "headlight", None)
+        if headlight is None:
+            return
+        self._assign_vector(headlight.ambient, [0.6, 0.6, 0.6])
+        self._assign_vector(headlight.diffuse, [0.8, 0.8, 0.8])
+        self._assign_vector(headlight.specular, [0.3, 0.3, 0.3])
+
+    def _apply_viewer_camera(self) -> None:
+        if self._viewer is None or self.config.viewer_camera is None:
+            return
+        cam = getattr(self._viewer, "cam", None)
+        if cam is None:
+            return
+        camera = dict(self.config.viewer_camera)
+        if "lookat" in camera:
+            lookat = self._as_float_sequence(camera["lookat"], "viewer_camera.lookat")
+            if len(lookat) != 3:
+                raise ValueError(f"viewer_camera.lookat must contain 3 values, got {len(lookat)}.")
+            self._assign_vector(cam.lookat, lookat)
+        for key in ("distance", "azimuth", "elevation"):
+            if key in camera:
+                setattr(cam, key, float(camera[key]))
 
     @staticmethod
     def _parse_config(
@@ -262,6 +297,8 @@ class FeagineMujocoEnv(BaseRobotEnv):
             robot_preset=str(env_config.get("robot_preset", "a03_type_2")),
             asset_model_type=str(env_config.get("asset_model_type", "mjcf")),
             render_mode=str(env_config.get("render_mode", "human")),
+            visual_preset=str(env_config.get("visual_preset", "debug_bright")),
+            viewer_camera=dict(env_config["viewer_camera"]) if "viewer_camera" in env_config else None,
             max_episode_steps=int(env_config.get("max_episode_steps", 200)),
             physics_steps_per_action=int(env_config.get("physics_steps_per_action", 4)),
             language=str(env_config.get("language", "")),
@@ -332,3 +369,11 @@ class FeagineMujocoEnv(BaseRobotEnv):
         if not isinstance(value, Sequence) or isinstance(value, str):
             raise TypeError(f"{label} must be a numeric sequence.")
         return [float(item) for item in value]
+
+    @staticmethod
+    def _assign_vector(target: Any, values: Sequence[float]) -> None:
+        try:
+            target[:] = values
+        except TypeError:
+            for index, value in enumerate(values):
+                target[index] = value

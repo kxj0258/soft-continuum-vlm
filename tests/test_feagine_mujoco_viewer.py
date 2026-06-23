@@ -18,6 +18,12 @@ class FakeViewerHandle:
     def __init__(self) -> None:
         self.sync_count = 0
         self.closed = False
+        self.cam = SimpleNamespace(
+            lookat=[0.0, 0.0, 0.0],
+            distance=0.0,
+            azimuth=0.0,
+            elevation=0.0,
+        )
 
     def sync(self) -> None:
         self.sync_count += 1
@@ -75,7 +81,15 @@ class FakeFeagineMujocoModule:
     FeagineMjcfRobot = FakeRobot
 
     def load_mujoco_model(self, *, preset_id: str, model_type: str) -> object:
-        return SimpleNamespace()
+        return SimpleNamespace(
+            vis=SimpleNamespace(
+                headlight=SimpleNamespace(
+                    ambient=[0.0, 0.0, 0.0],
+                    diffuse=[0.0, 0.0, 0.0],
+                    specular=[0.0, 0.0, 0.0],
+                )
+            )
+        )
 
     def robot_asset_path(self, *, preset_id: str, model_type: str) -> str:
         return f"/fake/{preset_id}/{model_type}.xml"
@@ -144,3 +158,40 @@ def test_human_render_mode_explains_viewer_start_failure() -> None:
 
     with pytest.raises(RuntimeError, match="--headless"):
         env.reset()
+
+
+def test_yaml_visual_preset_and_viewer_camera_are_applied() -> None:
+    fake_mujoco = FakeMujocoModule()
+    fake_feagine = FakeFeagineMujocoModule()
+
+    def import_module(name: str) -> object:
+        return {
+            "pyfeagine_sim_core": object(),
+            "feagine_mujoco": fake_feagine,
+            "mujoco": fake_mujoco,
+        }[name]
+
+    env = FeagineMujocoEnv(
+        {
+            "env": {
+                "render_mode": "human",
+                "visual_preset": "debug_bright",
+                "viewer_camera": {
+                    "lookat": [0.1, 0.2, 0.3],
+                    "distance": 1.4,
+                    "azimuth": 110,
+                    "elevation": -18,
+                },
+            }
+        },
+        import_module=import_module,
+    )
+    env.reset()
+
+    assert env._model.vis.headlight.ambient == pytest.approx([0.6, 0.6, 0.6])
+    assert env._model.vis.headlight.diffuse == pytest.approx([0.8, 0.8, 0.8])
+    assert env._model.vis.headlight.specular == pytest.approx([0.3, 0.3, 0.3])
+    assert fake_mujoco.viewer.handle.cam.lookat == pytest.approx([0.1, 0.2, 0.3])
+    assert fake_mujoco.viewer.handle.cam.distance == pytest.approx(1.4)
+    assert fake_mujoco.viewer.handle.cam.azimuth == pytest.approx(110)
+    assert fake_mujoco.viewer.handle.cam.elevation == pytest.approx(-18)

@@ -4,6 +4,12 @@ env:
   robot_preset: a03_type_2
   asset_model_type: mjcf
   render_mode: human
+  visual_preset: debug_bright
+  viewer_camera:
+    lookat: [0.0, 0.0, 0.35]
+    distance: 1.0
+    azimuth: 120
+    elevation: -20
   max_episode_steps: 200
   physics_steps_per_action: 4
   feagine_root_env: FEAGINE_SIM_ROOT

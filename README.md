@@ -76,6 +76,24 @@ python scripts/run_demo_env.py
 python scripts/run_demo_env.py --headless
 ```
 
+MuJoCo human viewer 的亮度和默认视角由
+`configs/env/feagine_mujoco_a03_type_2.yaml` 控制：
+
+```yaml
+env:
+  render_mode: human
+  visual_preset: debug_bright
+  viewer_camera:
+    lookat: [0.0, 0.0, 0.35]
+    distance: 1.0
+    azimuth: 120
+    elevation: -20
+```
+
+这些字段只修改运行时显示效果，例如 headlight 和 viewer camera，不会修改
+Feagine 安装包、MJCF 文件或仿真动力学。若窗口过暗，可优先调整
+`viewer_camera` 或保留 `visual_preset: debug_bright`。
+
 运行 mock 专家数据采集：
 
 ```bash
