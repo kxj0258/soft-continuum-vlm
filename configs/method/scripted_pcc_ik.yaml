@@ -3,9 +3,12 @@ method:
   controller: pcc_ik
   safety_projector: enabled
   action_space:
-    continuum_fields:
-      - delta_kappa_x
-      - delta_kappa_y
-      - delta_length
-      - gripper_open
-      - gripper_rotation
+    feagine_controls:
+      section_angles:
+        type: absolute_theta_phi_pairs
+        units: radians
+      grip_command:
+        range: [0.0, 1.0]
+        semantics: feagine_open_to_closed
+      grasper_rotation:
+        units: radians

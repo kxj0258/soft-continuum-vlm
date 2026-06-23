@@ -1,22 +1,20 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Mapping
+from collections.abc import Sequence
+from typing import Any, Mapping
 
 
 ACTION_FIELDS = (
-    "delta_kappa_x",
-    "delta_kappa_y",
-    "delta_length",
-    "gripper_open",
+    "section_angles",
+    "grip_command",
     "gripper_rotation",
 )
 
 
 @dataclass(frozen=True)
 class SafetyLimits:
-    max_delta_kappa: float
-    max_delta_length: float
+    max_abs_section_angle: float
     max_gripper_rotation: float
     max_contact_force: float
     max_penetration: float
@@ -28,33 +26,47 @@ class SafetyProjector:
 
     def project(
         self,
-        action: Mapping[str, float],
+        action: Mapping[str, Any],
         *,
         contact_force: float = 0.0,
         penetration: float = 0.0,
-    ) -> tuple[dict[str, float], dict[str, object]]:
-        safe_action = {
-            "delta_kappa_x": self._clip(action.get("delta_kappa_x", 0.0), self.limits.max_delta_kappa),
-            "delta_kappa_y": self._clip(action.get("delta_kappa_y", 0.0), self.limits.max_delta_kappa),
-            "delta_length": self._clip(action.get("delta_length", 0.0), self.limits.max_delta_length),
-            "gripper_open": min(max(float(action.get("gripper_open", 0.0)), 0.0), 1.0),
-            "gripper_rotation": self._clip(
-                action.get("gripper_rotation", 0.0), self.limits.max_gripper_rotation
-            ),
-        }
-        clipped_fields = [
-            field for field in ACTION_FIELDS if safe_action[field] != float(action.get(field, 0.0))
-        ]
+    ) -> tuple[dict[str, Any], dict[str, object]]:
+        safe_action: dict[str, Any] = {}
+        clipped_fields: list[str] = []
+        if "section_angles" in action:
+            section_angles = self._as_float_sequence(action["section_angles"])
+            safe_section_angles = [
+                self._clip(value, self.limits.max_abs_section_angle) for value in section_angles
+            ]
+            safe_action["section_angles"] = safe_section_angles
+            if safe_section_angles != section_angles:
+                clipped_fields.append("section_angles")
+        if "grip_command" in action:
+            grip_command = min(max(float(action["grip_command"]), 0.0), 1.0)
+            safe_action["grip_command"] = grip_command
+            if grip_command != float(action["grip_command"]):
+                clipped_fields.append("grip_command")
+        if "gripper_rotation" in action:
+            gripper_rotation = self._clip(action["gripper_rotation"], self.limits.max_gripper_rotation)
+            safe_action["gripper_rotation"] = gripper_rotation
+            if gripper_rotation != float(action["gripper_rotation"]):
+                clipped_fields.append("gripper_rotation")
+        for passthrough_field in ("joint_targets", "segment_joint_targets"):
+            if passthrough_field in action:
+                safe_action[passthrough_field] = action[passthrough_field]
+
         contact_limited = contact_force > self.limits.max_contact_force
         penetration_limited = penetration > self.limits.max_penetration
+        blocked_fields: list[str] = []
         if contact_limited or penetration_limited:
-            for field in ("delta_kappa_x", "delta_kappa_y", "delta_length", "gripper_rotation"):
-                if safe_action[field] != 0.0 and field not in clipped_fields:
-                    clipped_fields.append(field)
-                safe_action[field] = 0.0
+            for field in ("section_angles", "gripper_rotation", "joint_targets", "segment_joint_targets"):
+                if field in safe_action:
+                    blocked_fields.append(field)
+                    safe_action.pop(field)
         return safe_action, {
-            "clipped": bool(clipped_fields),
+            "clipped": bool(clipped_fields or blocked_fields),
             "clipped_fields": clipped_fields,
+            "blocked_fields": blocked_fields,
             "contact_limited": contact_limited,
             "penetration_limited": penetration_limited,
         }
@@ -63,3 +75,9 @@ class SafetyProjector:
     def _clip(value: float, limit: float) -> float:
         numeric_value = float(value)
         return min(max(numeric_value, -limit), limit)
+
+    @staticmethod
+    def _as_float_sequence(value: Any) -> list[float]:
+        if isinstance(value, str) or not isinstance(value, Sequence):
+            raise TypeError("section_angles must be a numeric sequence.")
+        return [float(item) for item in value]

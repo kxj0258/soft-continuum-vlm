@@ -29,7 +29,7 @@ def feagine_root(project: Path | None = None) -> Path:
             return override_path
 
     root = (project or project_root()).resolve()
-    for name in ("feagine-simulation", "feagine_simulation"):
+    for name in ("feagine_simulation", "feagine-simulation"):
         candidate = root.parent / name
         checked.append(candidate)
         if candidate.exists():
@@ -38,6 +38,6 @@ def feagine_root(project: Path | None = None) -> Path:
     checked_text = "\n".join(f"- {path}" for path in checked)
     raise FileNotFoundError(
         "Feagine simulation root was not found. Set FEAGINE_SIM_ROOT or place "
-        "feagine-simulation next to this project. Checked paths:\n"
+        "feagine_simulation or feagine-simulation next to this project. Checked paths:\n"
         f"{checked_text}"
     )

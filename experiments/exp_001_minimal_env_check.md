@@ -13,5 +13,8 @@ Command sequence:
 Expected observations:
 
 - Config loading succeeds for the YAML scaffold in `configs/`.
-- Feagine verification either passes or clearly reports that Feagine is not installed.
+- Feagine verification either passes or clearly reports missing source paths or
+  Python imports.
 - `pytest` passes the non-Feagine tests without requiring a MuJoCo graphics window.
+- `run_demo_env.py` returns a deterministic stub observation and states that
+  real Feagine stepping is deferred.

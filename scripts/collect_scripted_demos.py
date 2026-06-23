@@ -3,8 +3,10 @@
 
 def main() -> None:
     print(
-        "collect_scripted_demos.py is a scaffold for a later milestone; "
-        "no demo collection is implemented yet."
+        "Deferred scripted demo collection. Expected input: task config, env config, "
+        "and scripted controller config. Expected output: replayable expert "
+        "transition files. Integration path: connect ScriptedExpert to "
+        "FeagineMujocoEnv after Milestone 3."
     )
 
 

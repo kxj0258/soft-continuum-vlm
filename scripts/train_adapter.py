@@ -3,8 +3,10 @@
 
 def main() -> None:
     print(
-        "train_adapter.py is a scaffold for a later milestone; "
-        "no adapter training is implemented yet."
+        "Deferred adapter training. Expected input: scripted demonstration dataset "
+        "and deterministic feature tensors. Expected output: SoftEmbodimentAdapter "
+        "checkpoint and metrics. Integration path: add a torch training loop after "
+        "Milestone 5 without downloading external VLM or VLA weights."
     )
 
 

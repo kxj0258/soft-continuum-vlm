@@ -22,6 +22,26 @@ def test_feagine_root_uses_environment_override(tmp_path: Path, monkeypatch: pyt
     assert feagine_root() == fake.resolve()
 
 
+def test_feagine_root_defaults_to_underscore_sibling(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    project = tmp_path / "soft-continuum-vlm"
+    project.mkdir()
+    expected = tmp_path / "feagine_simulation"
+    expected.mkdir()
+    monkeypatch.delenv("FEAGINE_SIM_ROOT", raising=False)
+
+    assert feagine_root(project=project) == expected.resolve()
+
+
+def test_feagine_root_accepts_hyphen_sibling(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    project = tmp_path / "soft-continuum-vlm"
+    project.mkdir()
+    expected = tmp_path / "feagine-simulation"
+    expected.mkdir()
+    monkeypatch.delenv("FEAGINE_SIM_ROOT", raising=False)
+
+    assert feagine_root(project=project) == expected.resolve()
+
+
 def test_feagine_root_reports_checked_paths(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     project = tmp_path / "soft-continuum-vlm"
     project.mkdir()
@@ -30,5 +50,5 @@ def test_feagine_root_reports_checked_paths(tmp_path: Path, monkeypatch: pytest.
         feagine_root(project=project)
     message = str(exc_info.value)
     assert "FEAGINE_SIM_ROOT" in message
-    assert "feagine-simulation" in message
     assert "feagine_simulation" in message
+    assert "feagine-simulation" in message
