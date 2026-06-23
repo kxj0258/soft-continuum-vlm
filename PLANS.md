@@ -2,6 +2,8 @@
 
 ## Milestone 0
 
+Current milestone.
+
 ### Goal
 Repository skeleton, packaging, configs, docs, and initialization.
 
