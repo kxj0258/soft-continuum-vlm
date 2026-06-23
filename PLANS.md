@@ -134,6 +134,13 @@ metadata, and versioned config snapshots.
 ### Verification
 Run a small headless collection job and load the saved dataset in unit tests.
 
+Milestone 4 implementation note: `MockContinuumEnv` provides deterministic
+headless rollouts for CI and debug data generation. `collect_scripted_demos.py`
+can write `.npz` arrays plus sidecar metadata JSON with action schema,
+observation schema version, seed, command line, and environment type. The mock
+path does not require MuJoCo, Feagine, graphics, network access, or model
+weights.
+
 ### Risks and fallback
 Risk: MuJoCo is unavailable on a machine. Fallback: skip simulator-dependent
 tests and keep dataset schema tests independent of Feagine.
@@ -157,6 +164,12 @@ Output: adapter checkpoint, metrics, and action decoder compatibility tests.
 
 ### Verification
 Run shape tests, one tiny CPU training step, and checkpoint load/save tests.
+
+Milestone 5 implementation note: `DemoDataset` loads scripted `.npz` files for
+plain Python and PyTorch DataLoader use. `train_adapter.py` trains the small MLP
+on deterministic language features, proprioception, contact state, morphology,
+and flattened Feagine action vectors. `evaluate_adapter.py` runs a first mock
+evaluation pass and writes JSON metrics.
 
 ### Risks and fallback
 Risk: torch is unavailable in lightweight environments. Fallback: mark model
