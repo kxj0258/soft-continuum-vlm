@@ -1,0 +1,10 @@
+method:
+  name: soft_embodiment_adapter
+  model:
+    vision_language_dim: 16
+    proprioception_dim: 8
+    contact_dim: 4
+    morphology_dim: 6
+    hidden_dim: 32
+    action_dim: 5
+  external_weights: disabled

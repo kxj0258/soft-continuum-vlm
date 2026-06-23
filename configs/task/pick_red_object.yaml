@@ -1,0 +1,7 @@
+task:
+  name: pick_red_object
+  language: "Pick up the red object with contact-safe motion."
+  target_object: red_object
+  success:
+    requires_grasp: true
+    requires_lift: true

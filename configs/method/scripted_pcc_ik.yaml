@@ -1,0 +1,11 @@
+method:
+  name: scripted_pcc_ik
+  controller: pcc_ik
+  safety_projector: enabled
+  action_space:
+    continuum_fields:
+      - delta_kappa_x
+      - delta_kappa_y
+      - delta_length
+      - gripper_open
+      - gripper_rotation

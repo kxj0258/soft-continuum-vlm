@@ -1,0 +1,8 @@
+task:
+  name: rotate_and_place
+  language: "Rotate the grasped object and place it at the target pose."
+  target_object: grasped_object
+  gripper_rotation_required: true
+  success:
+    requires_pose_match: true
+    max_pose_error: 0.02

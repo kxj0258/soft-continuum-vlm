@@ -1,0 +1,8 @@
+task:
+  name: contact_push
+  language: "Use safe contact to push the object to the marked region."
+  target_object: push_object
+  contact_mode: allowed_safe_push
+  success:
+    requires_region_reached: true
+    max_contact_force: 1.0

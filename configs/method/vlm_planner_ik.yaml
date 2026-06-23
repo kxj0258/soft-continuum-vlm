@@ -1,0 +1,6 @@
+method:
+  name: vlm_planner_ik
+  planner: deterministic_stub
+  controller: pcc_ik
+  safety_projector: enabled
+  external_weights: disabled
