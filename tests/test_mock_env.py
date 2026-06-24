@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from soft_continuum_vlm.data.schema import validate_observation
 from soft_continuum_vlm.envs.mock_env import MockContinuumEnv
 
 
@@ -7,6 +8,7 @@ def test_mock_env_observation_schema_and_deterministic_step() -> None:
     env = MockContinuumEnv(task="obstacle_avoid_pick")
     obs = env.reset(language="Reach around the obstacle.", seed=7)
 
+    validate_observation(obs)
     assert obs["rgb"].shape == (64, 64, 3)
     assert obs["depth"].shape == (64, 64)
     assert set(obs["robot_state"]) >= {"tip_pose", "section_angles", "grip_command", "grasper_rotation"}

@@ -1,28 +1,19 @@
-# Experiment 004: Deterministic VLM Planner Debug
+# 实验 004：确定性 VLM Planner 调试
 
-## Command
+## 命令
 
-```bash
-python scripts/run_vlm_planner_demo.py \
-  --task obstacle_avoid_pick \
-  --language "绕过黑色障碍物，轻轻抓住蓝色圆柱" \
-  --mock-env \
-  --max-steps 60 \
-  --output outputs/rollouts/vlm_planner_debug.json
+```powershell
+python scripts/run_vlm_planner_demo.py --task obstacle_avoid_pick --language "绕过黑色障碍物，轻轻抓住蓝色圆柱" --mock-env --max-steps 60 --output outputs/rollouts/vlm_planner_debug.json
 ```
 
-## Purpose
+## 目的
 
-Validate the deterministic VLM planner stub. It converts Chinese or English
-language into structured target objects, avoidance constraints, gentle-contact
-limits, and subgoals.
+验证 deterministic VLM planner stub。它把中文或英文语言转换为结构化目标对象、避障约束、轻柔接触限制和子目标。
 
-## Current Limit
+## 当前限制
 
-This is not a real VLM. It is a deterministic rule parser for pipeline testing.
-Mock-env results must not be used as final paper evidence.
+这不是真实 VLM，而是用于 pipeline 测试的确定性规则解析器。mock-env 结果不能作为最终论文证据。
 
-## Next Step
+## 下一步
 
-Replace `DeterministicVLMPlanner.plan()` with a real VLM-backed planner while
-keeping the same `BasePlanner` interface and output schema.
+在保持 `BasePlanner` 接口和输出 schema 不变的前提下，用真实 VLM-backed planner 替换 `DeterministicVLMPlanner.plan()`。

@@ -14,7 +14,7 @@ SRC_ROOT = PROJECT_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
-from soft_continuum_vlm.controllers.pcc_ik_controller import PccIkController
+from soft_continuum_vlm.controllers.task_phase_expert import TaskPhaseExpert
 from soft_continuum_vlm.data.features import build_morphology_vector, encode_language_stub
 from soft_continuum_vlm.data.schema import (
     ACTION_KEYS,
@@ -64,24 +64,10 @@ def make_env(args: argparse.Namespace):
     return FeagineMujocoEnv(config)
 
 
-def scripted_action(controller: PccIkController, task: str, step_id: int) -> dict[str, Any]:
-    action = controller.compute_action(target_state={}, robot_state={})
-    if task in {"pick_red_object", "obstacle_avoid_pick"}:
-        action["section_angles"] = [0.2] * 6
-        action["grip_command"] = 1.0 if step_id >= 2 else 0.0
-    elif task == "contact_push":
-        action["section_angles"] = [0.15] * 6
-        action["grip_command"] = 0.0
-    elif task == "rotate_and_place":
-        action["section_angles"] = [0.0] * 6
-        action["grip_command"] = 1.0
-        action["grasper_rotation"] = 1.0
-    return action
-
-
 def append_step(rows: dict[str, list[Any]], *, obs: dict[str, Any], action: dict[str, Any],
                 reward: float, done: bool, success: bool, task_name: str,
-                episode_id: int, step_id: int, phase: str, morphology: np.ndarray) -> None:
+                episode_id: int, step_id: int, phase: str, morphology: np.ndarray,
+                expert_info: dict[str, Any], task_metrics: dict[str, Any]) -> None:
     rows["proprioception"].append(flatten_proprioception(obs))
     rows["contact"].append(flatten_contact(obs["contact"]))
     rows["language"].append(str(obs["language"]))
@@ -96,6 +82,11 @@ def append_step(rows: dict[str, list[Any]], *, obs: dict[str, Any], action: dict
     rows["phase"].append(phase)
     rows["episode_id"].append(int(episode_id))
     rows["step_id"].append(int(step_id))
+    rows["target_state"].append(json.dumps(expert_info.get("target_state", {}), sort_keys=True))
+    rows["raw_action"].append(json.dumps(expert_info.get("raw_action", {}), sort_keys=True))
+    rows["safe_action"].append(json.dumps(expert_info.get("safe_action", action), sort_keys=True))
+    rows["safety"].append(json.dumps({"source": "task_phase_expert", **dict(expert_info.get("safety", {}))}, sort_keys=True))
+    rows["task_metrics"].append(json.dumps(task_metrics, sort_keys=True))
 
 
 def rows_to_arrays(rows: dict[str, list[Any]]) -> dict[str, np.ndarray]:
@@ -114,24 +105,36 @@ def rows_to_arrays(rows: dict[str, list[Any]]) -> dict[str, np.ndarray]:
         "phase": np.asarray(rows["phase"]),
         "episode_id": np.asarray(rows["episode_id"], dtype=np.int32),
         "step_id": np.asarray(rows["step_id"], dtype=np.int32),
+        "target_state": np.asarray(rows["target_state"]),
+        "raw_action": np.asarray(rows["raw_action"]),
+        "safe_action": np.asarray(rows["safe_action"]),
+        "safety": np.asarray(rows["safety"]),
+        "task_metrics": np.asarray(rows["task_metrics"]),
     }
 
 
 def main() -> int:
     args = parse_args()
     env = make_env(args)
-    controller = PccIkController(section_count=3)
+    expert = TaskPhaseExpert()
     morphology = build_morphology_vector(section_count=3)
     rows: dict[str, list[Any]] = {key: [] for key in (
         "proprioception", "contact", "language", "language_feature", "morphology",
         "action", "action_vector", "reward", "done", "success", "task_name",
-        "phase", "episode_id", "step_id"
+        "phase", "episode_id", "step_id", "target_state", "raw_action",
+        "safe_action", "safety", "task_metrics"
     )}
     try:
         for episode_id in range(args.num_episodes):
-            obs = env.reset(task=args.task, seed=args.seed + episode_id)
+            try:
+                obs = env.reset(task=args.task, seed=args.seed + episode_id)
+            except Exception as exc:
+                env_type = "mock" if args.mock_env or args.env == "mock" else args.env
+                print(f"Unable to initialize {env_type} demonstration collection: {exc}", file=sys.stderr)
+                return 2
+            expert.reset(args.task, str(obs.get("language", "")))
             for step_id in range(args.max_steps):
-                action = scripted_action(controller, args.task, step_id)
+                action, expert_info = expert.act(obs)
                 next_obs, reward, done, info = env.step(action)
                 append_step(
                     rows,
@@ -143,8 +146,10 @@ def main() -> int:
                     task_name=args.task,
                     episode_id=episode_id,
                     step_id=step_id,
-                    phase="scripted",
+                    phase=str(expert_info.get("phase", "")),
                     morphology=morphology,
+                    expert_info=expert_info,
+                    task_metrics=dict(info.get("metrics", {})),
                 )
                 obs = next_obs
                 if done:
@@ -160,7 +165,12 @@ def main() -> int:
         "command_line": sys.argv,
         "seed": args.seed,
         "task_config": {"task": args.task},
-        "method_config": {"method": "scripted_pcc_ik"},
+        "method_config": {"method": "task_phase_expert"},
+        "expert_config": {
+            "controller": "PccIkController",
+            "safety_mode": "hold_current",
+            "phase_timeout": expert.phase_timeout,
+        },
         "env_type": "mock" if args.mock_env or args.env == "mock" else args.env,
         "action_schema": list(ACTION_KEYS),
         "observation_schema_version": OBSERVATION_SCHEMA_VERSION,

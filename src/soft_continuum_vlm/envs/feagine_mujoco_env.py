@@ -8,6 +8,8 @@ from typing import Any, Callable, Mapping, Sequence
 import numpy as np
 
 from soft_continuum_vlm.envs.base_env import Action, BaseRobotEnv, Observation
+from soft_continuum_vlm.envs.mujoco_state import body_pose, contact_to_dict, safe_mj_id2name
+from soft_continuum_vlm.envs.scene_registry import SceneRegistry
 
 
 ImportModule = Callable[[str], Any]
@@ -23,6 +25,7 @@ class FeagineMujocoConfig:
     max_episode_steps: int = 200
     physics_steps_per_action: int = 4
     language: str = ""
+    scene: Mapping[str, Any] | None = None
 
 
 class FeagineMujocoEnv(BaseRobotEnv):
@@ -46,6 +49,7 @@ class FeagineMujocoEnv(BaseRobotEnv):
         self._step_count = 0
         self._closed = False
         self._last_action: dict[str, Any] = {}
+        self._scene_registry = SceneRegistry.from_config({"scene": self.config.scene or {}})
         self._observation = self._make_observation(self.config.language)
 
     def ensure_runtime_available(self) -> dict[str, Any]:
@@ -135,21 +139,7 @@ class FeagineMujocoEnv(BaseRobotEnv):
         return dict(self._observation["contact"])
 
     def get_robot_state(self) -> Mapping[str, Any]:
-        if self._robot is not None and self._data is not None:
-            return {
-                "section_angles": tuple(float(value) for value in self._robot.get_section_angles()),
-                "grip_command": float(self._robot.grip_command),
-                "grasper_rotation": float(self._robot.grasper_rotation),
-                "qpos": np.asarray(self._data.qpos, dtype=np.float32).copy(),
-                "qvel": np.asarray(self._data.qvel, dtype=np.float32).copy(),
-                "step_count": self._step_count,
-                "closed": self._closed,
-            }
-        return {
-            "proprioception": np.array(self._observation["proprioception"], copy=True),
-            "step_count": self._step_count,
-            "closed": self._closed,
-        }
+        return dict(self._observation.get("robot_state", {}))
 
     def _load_runtime(self) -> None:
         modules = self.ensure_runtime_available()
@@ -302,15 +292,20 @@ class FeagineMujocoEnv(BaseRobotEnv):
             max_episode_steps=int(env_config.get("max_episode_steps", 200)),
             physics_steps_per_action=int(env_config.get("physics_steps_per_action", 4)),
             language=str(env_config.get("language", "")),
+            scene=dict(raw.get("scene", {})),
         )
 
     def _make_observation(self, language: str) -> Observation:
         contact = self._read_contact_info()
         proprioception = self._read_proprioception()
+        robot_state = self._read_robot_state()
+        objects = self._read_objects()
         return {
             "rgb": np.zeros((1, 1, 3), dtype=np.uint8),
             "depth": np.zeros((1, 1), dtype=np.float32),
             "proprioception": proprioception,
+            "robot_state": robot_state,
+            "objects": objects,
             "contact": contact,
             "language": language,
         }
@@ -327,31 +322,153 @@ class FeagineMujocoEnv(BaseRobotEnv):
 
     def _read_contact_info(self) -> dict[str, Any]:
         if self._model is None or self._data is None:
-            return {"max_force": 0.0, "max_penetration": 0.0, "contacts": []}
+            return {
+                "max_force": 0.0,
+                "max_penetration": 0.0,
+                "robot_contact_count": 0,
+                "obstacle_contact_count": 0,
+                "target_contact_count": 0,
+                "contacts": [],
+            }
         ncon = int(getattr(self._data, "ncon", 0))
         contacts: list[dict[str, Any]] = []
         max_force = 0.0
         max_penetration = 0.0
         modules = self.ensure_runtime_available()
         mujoco = modules["mujoco"]
+        filters = self._contact_name_filters()
         for index in range(ncon):
-            contact = self._data.contact[index]
-            distance = float(getattr(contact, "dist", 0.0))
-            force = self._contact_force_norm(mujoco, index)
-            max_force = max(max_force, force)
+            contact = contact_to_dict(mujoco, self._model, self._data, index, name_filters=filters)
+            distance = float(contact["distance"])
+            max_force = max(max_force, float(contact["force_norm"]))
             max_penetration = max(max_penetration, max(0.0, -distance))
-            contacts.append(
-                {
-                    "geom1": int(getattr(contact, "geom1", -1)),
-                    "geom2": int(getattr(contact, "geom2", -1)),
-                    "distance": distance,
-                    "force_norm": force,
-                }
-            )
+            contacts.append(contact)
         return {
             "max_force": max_force,
             "max_penetration": max_penetration,
+            "robot_contact_count": sum(1 for item in contacts if item["is_robot_contact"]),
+            "obstacle_contact_count": sum(1 for item in contacts if item["is_obstacle_contact"]),
+            "target_contact_count": sum(1 for item in contacts if item["is_target_contact"]),
             "contacts": contacts,
+        }
+
+    def _read_robot_state(self) -> dict[str, Any]:
+        section_angles = self._read_section_angles()
+        grip_command = float(getattr(self._robot, "grip_command", 0.0)) if self._robot is not None else 0.0
+        grasper_rotation = (
+            float(getattr(self._robot, "grasper_rotation", 0.0)) if self._robot is not None else 0.0
+        )
+        qpos = (
+            np.asarray(getattr(self._data, "qpos", []), dtype=np.float32).copy()
+            if self._data is not None
+            else np.zeros(0, dtype=np.float32)
+        )
+        qvel = (
+            np.asarray(getattr(self._data, "qvel", []), dtype=np.float32).copy()
+            if self._data is not None
+            else np.zeros(0, dtype=np.float32)
+        )
+        tip_pose, tip_pose_source = self._read_tip_pose()
+        return {
+            "tip_pose": tip_pose,
+            "tip_pose_source": tip_pose_source,
+            "section_angles": section_angles,
+            "grip_command": grip_command,
+            "grasper_rotation": grasper_rotation,
+            "qpos": qpos,
+            "qvel": qvel,
+        }
+
+    def _read_section_angles(self) -> list[float]:
+        if self._robot is None:
+            return [0.0] * 6
+        return [float(value) for value in self._robot.get_section_angles()]
+
+    def _read_tip_pose(self) -> tuple[dict[str, list[float]], str]:
+        robot_pose = self._read_robot_tip_pose()
+        if robot_pose is not None:
+            return robot_pose, "robot:tip_pose"
+        if self._model is None or self._data is None:
+            return self._zero_pose(), "unresolved"
+        mujoco = self.ensure_runtime_available()["mujoco"]
+        site_pose = self._find_named_site_pose(mujoco)
+        if site_pose is not None:
+            return site_pose
+        body_tip = self._find_named_body_pose(mujoco)
+        if body_tip is not None:
+            return body_tip
+        return self._zero_pose(), "unresolved"
+
+    def _read_robot_tip_pose(self) -> dict[str, list[float]] | None:
+        if self._robot is None:
+            return None
+        for method_name in ("tip_pose", "get_tip_pose", "end_effector_pose", "get_end_effector_pose"):
+            method = getattr(self._robot, method_name, None)
+            if not callable(method):
+                continue
+            try:
+                pose = method()
+            except Exception:
+                continue
+            parsed = self._pose_object_to_dict(pose)
+            if parsed is not None:
+                return parsed
+        return None
+
+    def _find_named_site_pose(self, mujoco: Any) -> tuple[dict[str, list[float]], str] | None:
+        mjt_obj = getattr(mujoco, "mjtObj", None)
+        if mjt_obj is None:
+            return None
+        site_type = getattr(mjt_obj, "mjOBJ_SITE", None)
+        if site_type is None:
+            return None
+        site_count = int(getattr(self._model, "nsite", 0))
+        for site_id in range(site_count):
+            name = safe_mj_id2name(mujoco, self._model, site_type, site_id)
+            if not self._is_tip_like_name(name):
+                continue
+            position = np.asarray(self._data.site_xpos[site_id], dtype=np.float64).reshape(-1)[:3]
+            if hasattr(self._data, "site_xquat"):
+                orientation = np.asarray(self._data.site_xquat[site_id], dtype=np.float64).reshape(-1)[:4]
+            else:
+                matrix = np.asarray(self._data.site_xmat[site_id], dtype=np.float64).reshape(3, 3)
+                orientation = self._mat3_to_quat(matrix)
+            return {
+                "position": [float(value) for value in position],
+                "orientation": [float(value) for value in orientation],
+            }, f"site:{name}"
+        return None
+
+    def _find_named_body_pose(self, mujoco: Any) -> tuple[dict[str, list[float]], str] | None:
+        mjt_obj = getattr(mujoco, "mjtObj", None)
+        if mjt_obj is None:
+            return None
+        body_count = int(getattr(self._model, "nbody", 0))
+        for body_id in range(body_count):
+            name = safe_mj_id2name(mujoco, self._model, mjt_obj.mjOBJ_BODY, body_id)
+            if self._is_tip_like_name(name):
+                return body_pose(self._model, self._data, body_id), f"body:{name}"
+        return None
+
+    def _read_objects(self) -> dict[str, Any]:
+        if self._model is None or self._data is None or not self._scene_registry.objects:
+            return {}
+        mujoco = self.ensure_runtime_available()["mujoco"]
+        return self._scene_registry.build_objects_observation(mujoco, self._model, self._data)
+
+    def _contact_name_filters(self) -> dict[str, list[str]]:
+        target_filters = ["target", "red", "blue", "cube", "cylinder"]
+        obstacle_filters = ["obstacle", "black"]
+        for spec in self._scene_registry.objects:
+            patterns = [spec.object_id, *spec.body_names, *spec.geom_name_patterns]
+            if spec.role == "obstacle":
+                obstacle_filters.extend(patterns)
+            elif spec.role == "target":
+                target_filters.extend(patterns)
+        return {
+            "robot": ["robot", "arm", "section", "finger", "grasper", "gripper", "tip", "ee"],
+            "obstacle": obstacle_filters,
+            "target": target_filters,
         }
 
     def _contact_force_norm(self, mujoco: Any, contact_index: int) -> float:
@@ -360,6 +477,46 @@ class FeagineMujocoEnv(BaseRobotEnv):
         values = np.zeros(6, dtype=np.float64)
         mujoco.mj_contactForce(self._model, self._data, contact_index, values)
         return float(np.linalg.norm(values[:3]))
+
+    @staticmethod
+    def _pose_object_to_dict(pose: Any) -> dict[str, list[float]] | None:
+        if isinstance(pose, Mapping):
+            position = pose.get("position")
+            orientation = pose.get("orientation", pose.get("quaternion"))
+        else:
+            position = getattr(pose, "position", None)
+            orientation = getattr(pose, "orientation", getattr(pose, "quaternion", None))
+        if position is None:
+            return None
+        return {
+            "position": [float(value) for value in list(position)[:3]],
+            "orientation": [float(value) for value in list(orientation or [1.0, 0.0, 0.0, 0.0])[:4]],
+        }
+
+    @staticmethod
+    def _zero_pose() -> dict[str, list[float]]:
+        return {"position": [0.0, 0.0, 0.0], "orientation": [1.0, 0.0, 0.0, 0.0]}
+
+    @staticmethod
+    def _is_tip_like_name(name: str) -> bool:
+        lowered = name.lower()
+        return any(token in lowered for token in ("tip", "end_effector", "ee", "grasper"))
+
+    @staticmethod
+    def _mat3_to_quat(matrix: np.ndarray) -> np.ndarray:
+        trace = float(np.trace(matrix))
+        if trace > 0.0:
+            scale = float(np.sqrt(trace + 1.0) * 2.0)
+            return np.asarray(
+                [
+                    0.25 * scale,
+                    (matrix[2, 1] - matrix[1, 2]) / scale,
+                    (matrix[0, 2] - matrix[2, 0]) / scale,
+                    (matrix[1, 0] - matrix[0, 1]) / scale,
+                ],
+                dtype=np.float64,
+            )
+        return np.asarray([1.0, 0.0, 0.0, 0.0], dtype=np.float64)
 
     @staticmethod
     def _as_float_sequence(value: Any, label: str) -> list[float]:

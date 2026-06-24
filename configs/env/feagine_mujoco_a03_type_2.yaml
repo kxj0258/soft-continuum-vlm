@@ -10,6 +10,33 @@ env:
     distance: 1.0
     azimuth: 120
     elevation: -20
-  max_episode_steps: 200
+  max_episode_steps: 2000000
   physics_steps_per_action: 4
   feagine_root_env: FEAGINE_SIM_ROOT
+scene:
+  objects:
+    - object_id: red_object
+      role: target
+      color: red
+      shape: cube
+      body_names: ["red_object", "red_cube", "cube_red"]
+      geom_name_patterns: ["red", "cube", "target"]
+    - object_id: target_object
+      role: target
+      color: blue
+      shape: cylinder
+      body_names: ["target_object", "blue_cylinder"]
+      geom_name_patterns: ["target", "blue", "cylinder"]
+    - object_id: obstacle
+      role: obstacle
+      color: black
+      body_names: ["obstacle", "black_obstacle"]
+      geom_name_patterns: ["obstacle", "black"]
+    - object_id: push_object
+      role: target
+      body_names: ["push_object"]
+      geom_name_patterns: ["push"]
+    - object_id: grasped_object
+      role: target
+      body_names: ["grasped_object"]
+      geom_name_patterns: ["grasped", "slot_object"]

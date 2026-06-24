@@ -1,6 +1,11 @@
-# Experiments
+# experiments/
 
-This directory holds reproducibility notes for simulator checks, data
-collection, training runs, and future paper figures. Keep entries small enough
-that another researcher can replay the commands and understand expected inputs,
-outputs, and fallback behavior.
+本目录记录仿真检查、数据采集、训练、评估和论文图表导出的复现实验说明。
+
+每个实验记录应尽量简短，包含：
+
+- 目的
+- Windows 单行命令
+- 预期输入和输出
+- mock 与真实 Feagine/MuJoCo 的边界
+- 后续集成路径

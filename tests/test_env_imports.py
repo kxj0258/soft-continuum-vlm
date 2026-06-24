@@ -140,7 +140,15 @@ def test_feagine_env_uses_real_runtime_calls_for_reset_and_step() -> None:
     )
     observation = env.reset(language="pick the red object")
 
-    assert set(observation) == {"rgb", "depth", "proprioception", "contact", "language"}
+    assert set(observation) == {
+        "rgb",
+        "depth",
+        "proprioception",
+        "contact",
+        "language",
+        "robot_state",
+        "objects",
+    }
     assert observation["language"] == "pick the red object"
     assert fake_feagine.load_calls == [("a03_type_2", "mjcf")]
 

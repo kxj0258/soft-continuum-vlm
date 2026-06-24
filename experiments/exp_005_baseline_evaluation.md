@@ -1,23 +1,14 @@
-# Experiment 005: Baseline Evaluation and Paper Figure Export
+# 实验 005：Baseline 评估与论文图表导出
 
-## Command
+## 命令
 
-```bash
-python scripts/evaluate_baselines.py \
-  --tasks pick_red_object obstacle_avoid_pick contact_push rotate_and_place \
-  --baselines scripted_expert adapter vlm_planner_ik \
-  --num-episodes 3 \
-  --max-steps 60 \
-  --mock-env \
-  --output outputs/metrics/baseline_debug.json \
-  --csv-output outputs/metrics/baseline_debug.csv
+```powershell
+python scripts/evaluate_baselines.py --tasks pick_red_object obstacle_avoid_pick contact_push rotate_and_place --baselines scripted_expert adapter vlm_planner_ik --num-episodes 3 --max-steps 60 --mock-env --output outputs/metrics/baseline_debug.json --csv-output outputs/metrics/baseline_debug.csv
 
-python scripts/export_paper_figures.py \
-  --metrics outputs/metrics/baseline_debug.json \
-  --output-dir outputs/figures
+python scripts/export_paper_figures.py --metrics outputs/metrics/baseline_debug.json --output-dir outputs/figures
 ```
 
-## Outputs
+## 输出文件
 
 - `outputs/metrics/baseline_debug.json`
 - `outputs/metrics/baseline_debug.csv`
@@ -27,8 +18,6 @@ python scripts/export_paper_figures.py \
 - `outputs/figures/summary_table.csv`
 - `outputs/figures/summary_table.md`
 
-## Current Limit
+## 当前限制
 
-The adapter baseline uses a random initialized policy when no checkpoint is
-provided. These metrics are mock-env debug artifacts for validating the
-evaluation pipeline, not final paper results.
+没有 checkpoint 时，adapter baseline 会使用随机初始化 policy 并记录 warning。这些指标是 mock-env debug artifact，只用于验证评估 pipeline，不是最终论文结果。

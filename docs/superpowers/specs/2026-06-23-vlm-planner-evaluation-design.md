@@ -1,24 +1,17 @@
-# Milestone 6/8 Design: Deterministic Planner and Evaluation
+# Milestone 6/8 设计：确定性 Planner 与评估
 
-## Goal
+## 目标
 
-Implement the first offline, deterministic version of Milestone 6 and Milestone 8.
-The system must run on `--mock-env`, avoid model downloads, preserve the Feagine
-action schema, and export JSON / CSV / PNG artifacts suitable for pipeline
-debugging and paper draft tables.
+实现 Milestone 6 和 Milestone 8 的第一个离线确定性版本。系统必须能在 `--mock-env` 下运行，不下载模型权重，保持 Feagine action schema，并导出 JSON、CSV、PNG artifact，用于 pipeline 调试和论文草稿表格。
 
-## Architecture
+## 架构
 
-- `planners/`: convert language, observation, and task name into structured
-  subgoals and safety constraints.
-- `controllers/vlm_planner_controller.py`: compose the deterministic planner,
-  existing scripted/PCC action path, and `SafetyProjector`.
-- `evaluation/`: run mock rollouts for baselines, compute metrics, and export
-  paper-draft plots/tables.
-- `scripts/`: provide command-line entry points for planner demo, baseline
-  evaluation, and paper figure export.
+- `planners/`：把语言、observation 和 task name 转换成结构化 subgoal 与安全约束。
+- `controllers/vlm_planner_controller.py`：组合确定性 planner、现有 scripted/PCC action path 和 `SafetyProjector`。
+- `evaluation/`：运行 mock baseline rollout，计算 metrics，并导出论文草稿图表和表格。
+- `scripts/`：提供 planner demo、baseline evaluation 和 paper figure export 的命令入口。
 
-## Data Flow
+## 数据流
 
 ```text
 language + observation
@@ -28,14 +21,13 @@ language + observation
   -> metrics / rollout logs / plots
 ```
 
-## Constraints
+## 约束
 
-- Do not touch `../feagine_simulation` or `../feagine-simulation`.
-- Do not download OpenVLA, Octo, VLM, or VLA weights.
-- Keep action fields as `section_angles`, `grip_command`, and `grasper_rotation`.
-- Mark all outputs as mock-env debug, not final paper claims.
+- 不修改 `../feagine_simulation` 或 `../feagine-simulation`。
+- 不下载 OpenVLA、Octo、VLM 或 VLA 权重。
+- action 字段固定为 `section_angles`、`grip_command` 和 `grasper_rotation`。
+- 所有 mock-env 输出都必须标注为 debug artifact，不能作为最终论文结论。
 
-## Testing
+## 测试
 
-Add unit and smoke tests for planner parsing, planner-controller info logging,
-metric aggregation, baseline evaluation JSON/CSV output, and figure export.
+添加 planner 解析、planner-controller info logging、metric aggregation、baseline evaluation JSON/CSV 输出和 figure export 的单元测试与 smoke test。

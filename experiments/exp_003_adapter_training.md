@@ -1,33 +1,24 @@
-# Experiment 003: Adapter Training
+# 实验 003：Adapter 训练
 
-## Command
+## 命令
 
-```bash
-python scripts/train_adapter.py \
-  --demo data/demos/debug_obstacle_avoid_pick.npz \
-  --epochs 3 \
-  --batch-size 8 \
-  --output outputs/checkpoints/adapter_debug.pt \
-  --metrics-output outputs/metrics/adapter_debug.json
+```powershell
+python scripts/train_adapter.py --demo data/demos/debug_obstacle_avoid_pick.npz --epochs 3 --batch-size 8 --output outputs/checkpoints/adapter_debug.pt --metrics-output outputs/metrics/adapter_debug.json
 ```
 
-## Generated Files
+## 生成文件
 
 - `outputs/checkpoints/adapter_debug.pt`
 - `outputs/metrics/adapter_debug.json`
 
-## Data Schema
+## 数据 schema
 
-The adapter consumes deterministic language features, proprioception, contact state,
-and morphology vectors. It predicts the flattened Feagine action vector using
-`section_angles`, `grip_command`, and `grasper_rotation`.
+Adapter 读取确定性 language feature、proprioception、contact state 和 morphology vector，预测 flatten 后的 Feagine action vector。action schema 固定为 `section_angles`、`grip_command` 和 `grasper_rotation`。
 
-## Current Limits
+## 当前限制
 
-The language encoder is a deterministic hash stub, and the dataset comes from mock
-rollouts. The result validates the pipeline, not real VLM or real robot performance.
+语言编码器是确定性 hash stub，示例数据来自 mock rollout。该结果只能证明训练 pipeline 可运行，不能证明真实 VLM 或真实机器人性能。
 
-## Next Step
+## 下一步
 
-Use the same `.npz` schema with Feagine MuJoCo rollouts once real scene/object/contact
-state extraction is available.
+真实场景对象和接触状态抽取稳定后，用同一 `.npz` schema 训练 Feagine MuJoCo 专家数据。

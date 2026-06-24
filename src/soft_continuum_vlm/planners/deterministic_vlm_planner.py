@@ -50,6 +50,8 @@ class DeterministicVLMPlanner:
             "approach_side": self._approach_side(text),
             "grasp_mode": "gentle" if gentle else "normal",
             "contact_force_limit": float(contact_force_limit),
+            "requires_rotation": requires_rotation,
+            "requires_push": pushing,
             "subgoals": subgoals,
             "language_constraints": {
                 "avoid_collision": avoid_collision,

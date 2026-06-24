@@ -1,0 +1,18 @@
+evaluation:
+  env_type: feagine_mujoco
+  env_config: configs/env/feagine_mujoco_a03_type_2.yaml
+  tasks: [pick_red_object, obstacle_avoid_pick, contact_push, rotate_and_place]
+  policies: [task_phase_expert, adapter, vlm_planner_ik]
+  adapter_checkpoint: outputs/checkpoints/adapter_best.pt
+  num_episodes: 10
+  max_steps: 150
+  seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+  output: outputs/metrics/feagine_policy_eval.json
+  csv_output: outputs/metrics/feagine_policy_eval.csv
+  safety_limits:
+    max_abs_section_angle: 0.8
+    max_gripper_rotation: 1.0
+    max_contact_force: 1.0
+    max_penetration: 0.01
+  phase_timeout: 12
+  section_count: 3

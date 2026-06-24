@@ -1,0 +1,16 @@
+evaluation:
+  env_type: mock
+  tasks: [pick_red_object, obstacle_avoid_pick, contact_push, rotate_and_place]
+  policies: [task_phase_expert, vlm_planner_ik]
+  num_episodes: 3
+  max_steps: 80
+  seeds: [0, 1, 2]
+  output: outputs/metrics/mock_policy_eval.json
+  csv_output: outputs/metrics/mock_policy_eval.csv
+  safety_limits:
+    max_abs_section_angle: 0.8
+    max_gripper_rotation: 1.0
+    max_contact_force: 1.0
+    max_penetration: 0.01
+  phase_timeout: 12
+  section_count: 3

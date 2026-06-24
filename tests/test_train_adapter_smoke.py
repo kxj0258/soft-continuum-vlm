@@ -56,3 +56,7 @@ def test_train_adapter_smoke_from_mock_demo(tmp_path) -> None:
     saved_metrics = json.loads(metrics.read_text(encoding="utf-8"))
     assert saved_metrics["epochs"] == 2
     assert saved_metrics["final_loss"] >= 0.0
+    assert "train_loss_curve" in saved_metrics
+    assert "val_loss_curve" in saved_metrics
+    assert "best_val_loss" in saved_metrics
+    assert saved_metrics["action_schema"] == ["section_angles", "grip_command", "grasper_rotation"]

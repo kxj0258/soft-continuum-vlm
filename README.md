@@ -4,39 +4,59 @@
 
 中文题目方向：**面向接触安全操作的软体连续体机械臂视觉语言具身适配方法**。
 
-这不是普通软件 demo。当前阶段优先把 Feagine MuJoCo 仿真、任务定义、安全控制接口、专家数据采集和小型 adapter 训练管线搭稳。VLM、OpenVLA、Octo 等大模型组件在明确集成里程碑之前都保持 deterministic stub，不下载大型权重。
+这不是普通软件 demo。当前目标是把 Feagine/MuJoCo 真实仿真入口、结构化状态抽取、PCC IK、任务阶段专家、专家数据采集、Soft Embodiment Adapter 训练、策略评估和论文图表导出串成可复现的最小实验闭环。VLM、OpenVLA、Octo 等大型模型在明确集成里程碑之前都保持 deterministic stub，不下载大型权重。
+
+## 论文实验主命令
+
+mock 命令只用于 CI 和调试。候选论文实验必须显式使用 `--env feagine_mujoco`，并传入 `configs/env/feagine_mujoco_a03_type_2.yaml`。当前 VLM planner 是离线确定性 baseline，不调用网络，也不下载 OpenVLA/OCTO 或其他大型模型权重。
+
+```powershell
+python scripts/inspect_feagine_scene.py --config configs/env/feagine_mujoco_a03_type_2.yaml --steps 5 --print-bodies --print-geoms --print-sites --output outputs/scene_inspection/a03_type_2_scene.json
+
+python scripts/run_task_phase_expert.py --task obstacle_avoid_pick --env feagine_mujoco --config configs/env/feagine_mujoco_a03_type_2.yaml --max-steps 120 --output outputs/rollouts/feagine_obstacle_avoid_pick_expert.json
+
+python scripts/collect_scripted_demos.py --task obstacle_avoid_pick --num-episodes 20 --max-steps 150 --output data/demos/feagine_obstacle_avoid_pick_expert.npz --env feagine_mujoco --config configs/env/feagine_mujoco_a03_type_2.yaml --seed 0 --save-config-snapshot
+
+python scripts/train_adapter.py --demo data/demos/feagine_obstacle_avoid_pick_expert.npz --epochs 50 --batch-size 32 --train-ratio 0.8 --val-ratio 0.2 --seed 0 --output outputs/checkpoints/adapter_best.pt --metrics-output outputs/metrics/adapter_training.json
+
+python scripts/evaluate_policies.py --tasks pick_red_object obstacle_avoid_pick contact_push rotate_and_place --policies task_phase_expert adapter vlm_planner_ik --adapter-checkpoint outputs/checkpoints/adapter_best.pt --env feagine_mujoco --config configs/env/feagine_mujoco_a03_type_2.yaml --num-episodes 10 --max-steps 150 --seed 0 --output outputs/metrics/feagine_policy_eval.json --csv-output outputs/metrics/feagine_policy_eval.csv
+
+python scripts/export_paper_figures.py --metrics outputs/metrics/feagine_policy_eval.json --output-dir outputs/figures
+```
+
+所有论文图表都必须由保存的 JSON/CSV 指标生成，不允许手工填写结果。
 
 ## 当前进度
 
 - Milestone 0：项目骨架和 Feagine 安装验证已完成。
-- Milestone 1：Feagine MuJoCo wrapper 已完成最小 reset/step，并支持默认 human viewer 与 headless 覆盖。
+- Milestone 1：Feagine MuJoCo wrapper 已支持 reset/step、human viewer 与 headless 覆盖。
 - Milestone 2：四个任务已有确定性评估逻辑。
-- Milestone 3：PCC IK / scripted expert / safety projector 已有最小可测试控制路径。
-- Milestone 4：mock scripted expert 数据采集管线已可生成 `.npz` demo 和 metadata。
-- Milestone 5：Soft Embodiment Adapter 已支持 CPU tiny training、checkpoint 和 metrics 输出。
-- Milestone 6：Deterministic VLM planner stub 已能把中英文语言转成结构化子目标和安全约束。
-- Milestone 8：mock baseline evaluation 已能导出 JSON、CSV、PNG 和 Markdown 草稿表格。
+- Milestone 3：PCC IK、任务阶段专家和 SafetyProjector 已形成可测试控制路径。
+- Milestone 4：`TaskPhaseExpert + MockContinuumEnv` 可生成 `.npz` demo 和 metadata。
+- Milestone 5：Soft Embodiment Adapter 支持训练、验证集划分、best checkpoint 和 metrics 输出。
+- Milestone 6：Deterministic VLM planner stub 可把中英文语言转成结构化子目标和安全约束。
+- Milestone 8 到 11：mock policy evaluation、真实 Feagine 场景绑定、任务阶段专家 rollout、论文图表导出都已有命令入口。
 
 尚未完成：
 
-- 真实物体检测或真实 VLM planner。
-- 基于真实 Feagine MuJoCo 场景状态的专家数据批量采集。
-- adapter 的正式训练配置和论文级实验统计。
+- 真实视觉检测或真实 VLM planner。
+- 基于可用 Feagine/MuJoCo runtime 的批量真实专家数据采集。
+- 使用真实 Feagine 数据训练 adapter 并做论文级统计。
 - OpenVLA/OCTO 类 baseline 的真实接入。
 
 ## 目录结构
 
 ```text
-configs/      环境、任务和方法配置。
-data/         本地生成的数据目录；demo 文件默认被 Git 忽略。
-scripts/      安装、验证、demo、数据采集、训练和评估入口。
+configs/      环境、任务、方法和评估配置。
+data/         本地生成的数据目录，demo 文件默认被 Git 忽略。
+scripts/      安装、验证、demo、数据采集、训练、评估和图表入口。
 src/          可导入的 Python 包。
 tests/        不依赖 MuJoCo 图形窗口的单元测试。
 experiments/  实验记录和复现实验说明。
 outputs/      checkpoint、metrics、figures、rollouts 等生成物目录。
 ```
 
-Feagine 必须保留在本仓库外部。默认路径是同级目录：
+Feagine 必须保留在本仓库外部。默认相对位置是：
 
 - `../feagine_simulation`
 - `../feagine-simulation`
@@ -45,39 +65,38 @@ Feagine 必须保留在本仓库外部。默认路径是同级目录：
 
 ## 快速验证
 
-推荐先激活环境：
+推荐先激活环境并安装本仓库：
 
-```bash
+```powershell
 conda activate feagine_vlm
 pip install -e .
 ```
 
-验证 Feagine：
+验证 Feagine 安装：
 
-```bash
+```powershell
 python scripts/verify_feagine_install.py
 ```
 
 运行单元测试：
 
-```bash
+```powershell
 pytest
 ```
 
 运行 MuJoCo human viewer demo：
 
-```bash
+```powershell
 python scripts/run_demo_env.py
 ```
 
 无窗口运行同一个 demo：
 
-```bash
+```powershell
 python scripts/run_demo_env.py --headless
 ```
 
-MuJoCo human viewer 的亮度和默认视角由
-`configs/env/feagine_mujoco_a03_type_2.yaml` 控制：
+MuJoCo human viewer 的亮度和默认视角由 `configs/env/feagine_mujoco_a03_type_2.yaml` 控制：
 
 ```yaml
 env:
@@ -90,78 +109,53 @@ env:
     elevation: -20
 ```
 
-这些字段只修改运行时显示效果，例如 headlight 和 viewer camera，不会修改
-Feagine 安装包、MJCF 文件或仿真动力学。若窗口过暗，可优先调整
-`viewer_camera` 或保留 `visual_preset: debug_bright`。
+这些字段只影响运行时显示效果，例如 headlight 和 viewer camera，不会修改 Feagine 安装包、MJCF 文件或仿真动力学。
 
-运行 mock 专家数据采集：
+## 真实 Feagine/MuJoCo 场景绑定
 
-```bash
-python scripts/collect_scripted_demos.py \
-  --task obstacle_avoid_pick \
-  --num-episodes 4 \
-  --max-steps 50 \
-  --output data/demos/debug_obstacle_avoid_pick.npz \
-  --mock-env \
-  --seed 0
+`MockContinuumEnv` 只用于 CI 和调试。真实论文实验必须使用 `FeagineMujocoEnv`。
+
+真实环境通过 `SceneRegistry` 将 MuJoCo body/geom 绑定到任务对象。候选 `body_names` 和 `geom_name_patterns` 写在 `configs/env/feagine_mujoco_a03_type_2.yaml`。如果对象无法在真实 MJCF 中解析，observation 会保留该对象并写入 `available: false` 和 `missing_reason`，然后根据 inspection 脚本输出修正 YAML。
+
+```powershell
+python scripts/inspect_feagine_scene.py --config configs/env/feagine_mujoco_a03_type_2.yaml --steps 5 --print-bodies --print-geoms --print-sites --output outputs/scene_inspection/a03_type_2_scene.json
 ```
 
-运行 adapter tiny training：
+结构化 Feagine observation 包含：
 
-```bash
-python scripts/train_adapter.py \
-  --demo data/demos/debug_obstacle_avoid_pick.npz \
-  --epochs 3 \
-  --batch-size 8 \
-  --output outputs/checkpoints/adapter_debug.pt \
-  --metrics-output outputs/metrics/adapter_debug.json
+- `rgb`
+- `depth`
+- `language`
+- `proprioception`
+- `robot_state`
+- `objects`
+- `contact`
+
+## PCC IK 与任务阶段专家
+
+控制闭环只依赖结构化 observation：
+
+```text
+observation + task
+  -> TaskPhaseExpert
+  -> PccIkController
+  -> SafetyProjector(mode="hold_current")
+  -> Feagine action
 ```
 
-运行 adapter mock evaluation：
+`PccIkController` 在给定可达 waypoint 时不再返回纯零动作。当前运动学是近似 PCC/section-angle 模型，使用数值 Jacobian；后续可以把 `continuum_kinematics.py` 中的近似 FK/Jacobian 替换为 `pyfeagine_sim_core` 的精确实现，而不改变控制器接口。
 
-```bash
-python scripts/evaluate_adapter.py \
-  --checkpoint outputs/checkpoints/adapter_debug.pt \
-  --task obstacle_avoid_pick \
-  --num-episodes 2 \
-  --max-steps 30 \
-  --mock-env \
-  --output outputs/metrics/eval_adapter_debug.json
-```
+mock 调试命令：
 
-运行 deterministic VLM planner demo：
+```powershell
+python scripts/run_task_phase_expert.py --task obstacle_avoid_pick --mock-env --max-steps 80 --output outputs/rollouts/mock_obstacle_avoid_pick_expert.json
 
-```bash
-python scripts/run_vlm_planner_demo.py \
-  --task obstacle_avoid_pick \
-  --language "绕过黑色障碍物，轻轻抓住蓝色圆柱" \
-  --mock-env \
-  --max-steps 60 \
-  --output outputs/rollouts/vlm_planner_debug.json
-```
-
-运行 baseline evaluation 并导出论文草稿图表：
-
-```bash
-python scripts/evaluate_baselines.py \
-  --tasks pick_red_object obstacle_avoid_pick contact_push rotate_and_place \
-  --baselines scripted_expert adapter vlm_planner_ik \
-  --num-episodes 3 \
-  --max-steps 60 \
-  --mock-env \
-  --output outputs/metrics/baseline_debug.json \
-  --csv-output outputs/metrics/baseline_debug.csv
-
-python scripts/export_paper_figures.py \
-  --metrics outputs/metrics/baseline_debug.json \
-  --output-dir outputs/figures
+python scripts/collect_scripted_demos.py --task obstacle_avoid_pick --num-episodes 3 --max-steps 80 --output data/demos/obstacle_avoid_pick_task_phase_debug.npz --mock-env --seed 0
 ```
 
 ## Observation Schema
 
-Milestone 2 以后采用结构化 observation，不依赖真实视觉模型。任务评估、mock 环境、数据采集和 adapter 训练先读取 MuJoCo/Feagine 或测试 fixture 提供的状态字段；后续视觉模型只负责估计这些字段。
-
-核心结构如下：
+任务评估、mock 环境、数据采集和 adapter 训练都读取结构化 observation。后续视觉模型只负责估计这些字段。
 
 ```python
 observation = {
@@ -223,7 +217,7 @@ action = {
 }
 ```
 
-字段名必须使用 Feagine 的 `grasper_rotation`，不是 `gripper_rotation`。`SafetyProjector` 会裁剪 `section_angles`、`grip_command` 和 `grasper_rotation`；当接触力或穿透深度超过限制时，会冻结连续体运动和 grasper 旋转，但保留 `grip_command`。
+字段名必须使用 Feagine 的 `grasper_rotation`，不是 `gripper_rotation`。`SafetyProjector` 会裁剪 `section_angles`、`grip_command` 和 `grasper_rotation`；接触力或穿透深度超过限制时，真实控制推荐使用 `hold_current` 模式冻结到当前状态。
 
 ## Dataset Schema
 
@@ -243,6 +237,11 @@ action = {
 - `phase`
 - `episode_id`
 - `step_id`
+- `target_state`
+- `raw_action`
+- `safe_action`
+- `safety`
+- `task_metrics`
 
 metadata 包含 git commit、命令行、seed、task/method/env 配置、action schema 和 observation schema version。
 
@@ -250,36 +249,45 @@ metadata 包含 git commit、命令行、seed、task/method/env 配置、action 
 
 当前 planner 是 deterministic stub，不调用真实 VLM，也不下载权重。它支持中文和英文关键词规则：
 
-- 颜色：红/蓝/绿/黄/黑，`red/blue/green/yellow/black`
-- 动作：抓取、绕过、推动、旋转、放置，`grasp/avoid/push/rotate/place`
-- 安全约束：轻轻、不要碰、`gentle/gently/avoid`
+- 颜色：红、蓝、绿、黄、黑，`red`、`blue`、`green`、`yellow`、`black`
+- 动作：抓取、绕过、推动、旋转、放置，`grasp`、`avoid`、`push`、`rotate`、`place`
+- 安全约束：轻轻、不要碰、`gentle`、`gently`、`avoid`
 
-输出包含 `target_object`、`avoid_objects`、`approach_side`、`grasp_mode`、`contact_force_limit`、`subgoals` 和 `language_constraints`。后续真实 VLM 只需要替换 `BasePlanner.plan()` 实现。
+输出包含 `target_object`、`avoid_objects`、`approach_side`、`grasp_mode`、`contact_force_limit`、`requires_rotation`、`requires_push`、`subgoals` 和 `language_constraints`。后续真实 VLM 只需要替换 `BasePlanner.plan()` 实现。
 
-## Evaluation Outputs
+## 评估与图表
 
-`scripts/evaluate_baselines.py` 支持三个 debug baseline：
+mock baseline 评估：
 
-- `scripted_expert`：复用现有 scripted/PCC 控制路径。
-- `adapter`：没有 checkpoint 时使用随机初始化 policy 并记录 warning。
-- `vlm_planner_ik`：语言 planner + scripted/PCC + safety projector。
+```powershell
+python scripts/evaluate_baselines.py --tasks pick_red_object obstacle_avoid_pick contact_push rotate_and_place --baselines scripted_expert adapter vlm_planner_ik --num-episodes 3 --max-steps 60 --mock-env --output outputs/metrics/baseline_debug.json --csv-output outputs/metrics/baseline_debug.csv
 
-`scripts/export_paper_figures.py` 使用 matplotlib 导出：
+python scripts/export_paper_figures.py --metrics outputs/metrics/baseline_debug.json --output-dir outputs/figures
+```
+
+policy 评估：
+
+```powershell
+python scripts/evaluate_policies.py --tasks pick_red_object obstacle_avoid_pick contact_push rotate_and_place --policies task_phase_expert vlm_planner_ik --mock-env --num-episodes 2 --max-steps 80 --seed 0 --output outputs/metrics/mock_policy_eval.json --csv-output outputs/metrics/mock_policy_eval.csv
+```
+
+图表导出包括：
 
 - `success_rate_by_task.png`
-- `max_contact_force_by_task.png`
-- `penetration_by_task.png`
+- `contact_force_by_policy.png`
+- `penetration_by_policy.png`
+- `safety_clip_count_by_policy.png`
 - `summary_table.csv`
 - `summary_table.md`
 
-这些 mock-env 指标只用于 pipeline 验证和论文草稿排版，不能作为最终论文结论。
+mock-env 指标只用于 pipeline 验证和论文草稿排版，不能作为最终论文结论。
 
 ## 开发约束
 
-- 不要复制或修改 `../feagine_simulation` / `../feagine-simulation`。
+- 不要复制或修改 `../feagine_simulation` 或 `../feagine-simulation`。
 - Feagine 只能通过安装脚本、相对路径或 `FEAGINE_SIM_ROOT` 引用。
 - 所有路径必须支持相对项目位置。
 - 测试不能依赖 MuJoCo 图形窗口。
 - 如果 MuJoCo 或 Feagine 不可用，相关测试必须 graceful skip 或使用 fake/mock runtime。
 - 不下载 OpenVLA、Octo 或大型模型权重。
-- 每次代码改动后运行相关测试，并做阶段性 Git 提交。
+- 每次代码改动后运行相关测试。
