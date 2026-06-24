@@ -1,6 +1,7 @@
 import importlib
 from types import SimpleNamespace
 
+import numpy as np
 import pytest
 
 
@@ -94,7 +95,10 @@ class FakeRobot:
         self._grasper_rotation = angle
 
     def tip_pose(self) -> object:
-        return SimpleNamespace(position=[1.0, 2.0, 3.0], quaternion=[1.0, 0.0, 0.0, 0.0])
+        return SimpleNamespace(
+            position=np.asarray([1.0, 2.0, 3.0], dtype=np.float64),
+            quaternion=np.asarray([1.0, 0.0, 0.0, 0.0], dtype=np.float64),
+        )
 
 
 class FakeFeagineMujocoModule:

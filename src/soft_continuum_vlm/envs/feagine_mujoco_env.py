@@ -488,9 +488,12 @@ class FeagineMujocoEnv(BaseRobotEnv):
             orientation = getattr(pose, "orientation", getattr(pose, "quaternion", None))
         if position is None:
             return None
+        orientation_values = [1.0, 0.0, 0.0, 0.0] if orientation is None else list(orientation)
+        if len(orientation_values) == 0:
+            orientation_values = [1.0, 0.0, 0.0, 0.0]
         return {
             "position": [float(value) for value in list(position)[:3]],
-            "orientation": [float(value) for value in list(orientation or [1.0, 0.0, 0.0, 0.0])[:4]],
+            "orientation": [float(value) for value in orientation_values[:4]],
         }
 
     @staticmethod
