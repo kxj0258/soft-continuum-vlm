@@ -49,6 +49,9 @@ class FeagineMujocoEnv(BaseRobotEnv):
         self._step_count = 0
         self._closed = False
         self._last_action: dict[str, Any] = {}
+        self._last_section_angles: list[float] = []
+        self._last_grip_command = 0.0
+        self._last_grasper_rotation = 0.0
         self._scene_registry = SceneRegistry.from_config({"scene": self.config.scene or {}})
         self._observation = self._make_observation(self.config.language)
 
@@ -89,6 +92,9 @@ class FeagineMujocoEnv(BaseRobotEnv):
         self._step_count = 0
         self._closed = False
         self._last_action = {}
+        self._last_section_angles = []
+        self._last_grip_command = 0.0
+        self._last_grasper_rotation = 0.0
         self._load_runtime()
         self._forward()
         self._ensure_viewer()
@@ -131,6 +137,8 @@ class FeagineMujocoEnv(BaseRobotEnv):
             self._viewer.close()
         self._viewer = None
         self._closed = True
+        if "robot_state" in self._observation:
+            self._observation["robot_state"] = self._read_robot_state()
 
     def get_observation(self) -> Observation:
         return dict(self._observation)
@@ -197,12 +205,17 @@ class FeagineMujocoEnv(BaseRobotEnv):
             if len(section_angles) != expected:
                 raise ValueError(f"section_angles must contain {expected} values, got {len(section_angles)}.")
             self._robot.drive_section_angles(section_angles)
+            self._last_section_angles = list(section_angles)
             applied.append("section_angles")
         if "grip_command" in action:
-            self._robot.set_grip_command(float(action["grip_command"]))
+            grip_command = float(action["grip_command"])
+            self._robot.set_grip_command(grip_command)
+            self._last_grip_command = grip_command
             applied.append("grip_command")
         if "grasper_rotation" in action:
-            self._robot.drive_grasper_rotation(float(action["grasper_rotation"]))
+            grasper_rotation = float(action["grasper_rotation"])
+            self._robot.drive_grasper_rotation(grasper_rotation)
+            self._last_grasper_rotation = grasper_rotation
             applied.append("grasper_rotation")
         if "joint_targets" in action:
             joint_targets = {str(key): float(value) for key, value in dict(action["joint_targets"]).items()}
@@ -311,12 +324,13 @@ class FeagineMujocoEnv(BaseRobotEnv):
         }
 
     def _read_proprioception(self) -> np.ndarray:
-        if self._robot is None:
-            return np.zeros(8, dtype=np.float32)
+        section_angles = self._read_section_angles()
+        grip_command = self._read_grip_command()
+        grasper_rotation = self._read_grasper_rotation()
         values = [
-            *[float(value) for value in self._robot.get_section_angles()],
-            float(self._robot.grip_command),
-            float(self._robot.grasper_rotation),
+            *section_angles,
+            grip_command,
+            grasper_rotation,
         ]
         return np.asarray(values, dtype=np.float32)
 
@@ -354,50 +368,102 @@ class FeagineMujocoEnv(BaseRobotEnv):
 
     def _read_robot_state(self) -> dict[str, Any]:
         section_angles = self._read_section_angles()
-        grip_command = float(getattr(self._robot, "grip_command", 0.0)) if self._robot is not None else 0.0
-        grasper_rotation = (
-            float(getattr(self._robot, "grasper_rotation", 0.0)) if self._robot is not None else 0.0
-        )
+        grip_command = self._read_grip_command()
+        grasper_rotation = self._read_grasper_rotation()
         qpos = (
-            np.asarray(getattr(self._data, "qpos", []), dtype=np.float32).copy()
+            np.asarray(getattr(self._data, "qpos", [])).copy()
             if self._data is not None
-            else np.zeros(0, dtype=np.float32)
+            else np.zeros(0)
         )
         qvel = (
-            np.asarray(getattr(self._data, "qvel", []), dtype=np.float32).copy()
+            np.asarray(getattr(self._data, "qvel", [])).copy()
             if self._data is not None
-            else np.zeros(0, dtype=np.float32)
+            else np.zeros(0)
         )
-        tip_pose, tip_pose_source = self._read_tip_pose()
+        ctrl = (
+            np.asarray(getattr(self._data, "ctrl", [])).copy()
+            if self._data is not None
+            else np.zeros(0)
+        )
+        tip_pose = self._read_tip_pose()
         return {
             "tip_pose": tip_pose,
-            "tip_pose_source": tip_pose_source,
             "section_angles": section_angles,
             "grip_command": grip_command,
             "grasper_rotation": grasper_rotation,
             "qpos": qpos,
             "qvel": qvel,
+            "ctrl": ctrl,
+            "step_count": self._step_count,
+            "closed": self._closed,
         }
 
     def _read_section_angles(self) -> list[float]:
-        if self._robot is None:
-            return [0.0] * 6
-        return [float(value) for value in self._robot.get_section_angles()]
+        if self._robot is not None:
+            get_section_angles = getattr(self._robot, "get_section_angles", None)
+            if callable(get_section_angles):
+                try:
+                    return [float(value) for value in get_section_angles()]
+                except Exception:
+                    pass
+            section_angles = getattr(self._robot, "section_angles", None)
+            if section_angles is not None:
+                try:
+                    return [float(value) for value in section_angles]
+                except TypeError:
+                    pass
+        if self._last_section_angles:
+            return list(self._last_section_angles)
+        last_action_angles = self._last_action.get("section_angles")
+        if last_action_angles is not None:
+            return self._as_float_sequence(last_action_angles, "section_angles")
+        return []
 
-    def _read_tip_pose(self) -> tuple[dict[str, list[float]], str]:
-        robot_pose = self._read_robot_tip_pose()
-        if robot_pose is not None:
-            return robot_pose, "robot:tip_pose"
+    def _read_grip_command(self) -> float:
+        if self._robot is not None:
+            value = getattr(self._robot, "grip_command", None)
+            if value is not None:
+                return float(value)
+        if "grip_command" in self._last_action:
+            return float(self._last_action["grip_command"])
+        return float(self._last_grip_command)
+
+    def _read_grasper_rotation(self) -> float:
+        if self._robot is not None:
+            value = getattr(self._robot, "grasper_rotation", None)
+            if value is not None:
+                return float(value)
+        if "grasper_rotation" in self._last_action:
+            return float(self._last_action["grasper_rotation"])
+        return float(self._last_grasper_rotation)
+
+    def _read_tip_pose(self) -> dict[str, Any]:
         if self._model is None or self._data is None:
-            return self._zero_pose(), "unresolved"
+            return self._unresolved_tip_pose()
         mujoco = self.ensure_runtime_available()["mujoco"]
-        site_pose = self._find_named_site_pose(mujoco)
-        if site_pose is not None:
-            return site_pose
-        body_tip = self._find_named_body_pose(mujoco)
-        if body_tip is not None:
-            return body_tip
-        return self._zero_pose(), "unresolved"
+        body_id = self._tip_body_id(mujoco, "feagine_grasper_tip")
+        if body_id is None:
+            return self._unresolved_tip_pose()
+        position = np.asarray(self._data.xpos[body_id], dtype=np.float64).reshape(-1)[:3]
+        orientation = np.asarray(self._data.xquat[body_id], dtype=np.float64).reshape(-1)[:4]
+        return {
+            "position": [float(value) for value in position],
+            "orientation": [float(value) for value in orientation],
+            "source": "body:feagine_grasper_tip",
+            "body_name": "feagine_grasper_tip",
+            "body_id": int(body_id),
+        }
+
+    def _tip_body_id(self, mujoco: Any, body_name: str) -> int | None:
+        mjt_obj = getattr(mujoco, "mjtObj", None)
+        mj_name2id = getattr(mujoco, "mj_name2id", None)
+        if mjt_obj is None or mj_name2id is None:
+            return None
+        try:
+            body_id = int(mj_name2id(self._model, mjt_obj.mjOBJ_BODY, body_name))
+        except Exception:
+            return None
+        return body_id if body_id >= 0 else None
 
     def _read_robot_tip_pose(self) -> dict[str, list[float]] | None:
         if self._robot is None:
@@ -499,6 +565,16 @@ class FeagineMujocoEnv(BaseRobotEnv):
     @staticmethod
     def _zero_pose() -> dict[str, list[float]]:
         return {"position": [0.0, 0.0, 0.0], "orientation": [1.0, 0.0, 0.0, 0.0]}
+
+    @staticmethod
+    def _unresolved_tip_pose() -> dict[str, Any]:
+        return {
+            "position": [0.0, 0.0, 0.0],
+            "orientation": [1.0, 0.0, 0.0, 0.0],
+            "source": "unresolved",
+            "body_name": None,
+            "body_id": None,
+        }
 
     @staticmethod
     def _is_tip_like_name(name: str) -> bool:

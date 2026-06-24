@@ -15,3 +15,24 @@
 - 如果 MuJoCo 或 Feagine 不可用，测试必须 graceful skip。
 - 所有 TODO 注释和 deferred engineering notes 都必须说明预期输入、输出和集成路径。
 - 当前 Windows 环境中的文档命令示例必须写成单行，不使用续行符。
+
+## Codex Narrow-Step Development Rules
+
+For this repository, every Codex task must be narrow and acceptance-test driven.
+
+Default rules:
+
+1. Do not scan or rewrite the whole repository unless explicitly requested.
+2. Read only the files listed in the user prompt.
+3. Modify only the files listed in the user prompt.
+4. Do not run full `pytest` unless explicitly requested.
+5. Prefer targeted tests such as `pytest tests/test_xxx.py`.
+6. Do not implement VLM, VLA, OpenVLA, Octo, adapter training, or dataset collection unless the current step explicitly asks for it.
+7. Do not touch `../feagine_simulation` or `../feagine-simulation`.
+8. Do not download model weights.
+9. Do not introduce new dependencies unless explicitly requested.
+10. End every response with:
+    - files changed
+    - commands run
+    - whether acceptance criteria passed
+    - remaining issues
