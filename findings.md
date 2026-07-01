@@ -60,3 +60,10 @@
 - 新包装层应忽略 backend 自身 reward，使用任务对象计算 reward/success，同时保留 backend done/info 作为截断和诊断信息。
 - Reach expert 可以直接用 `(goal-tip)/delta_xyz_scale` 生成裁剪后的 4D action，并固定夹爪打开。
 - `FeagineMetaWorldEnv` 不从 `envs/__init__.py` 急切导出，避免 `controllers -> action_space -> envs.__init__ -> wrapper -> controllers` 的循环导入；调用方使用其完整模块路径。
+
+## M6a Push 任务发现
+
+- 现有 contact observation 已提供 `max_force`、`max_penetration` 和逐接触 geom/body 名称，足以区分目标物体接触与无关碰撞。
+- Push 任务需要轻量状态 `approach -> push -> complete`；任务基类应增加 `update_task_state()` hook，并由统一 `evaluate()` 在 reward/success/metrics 前调用。
+- 包装环境必须在 task evaluation 后重新注入 task info，确保返回 observation 中的 phase 是本步更新后的状态。
+- Push expert 应先移动到物体后方的预接触点，再沿 object→goal 方向推动，且始终输出打开夹爪的 4D action。

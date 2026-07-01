@@ -52,10 +52,14 @@ class FeagineMetaWorldTask(ABC):
     def get_task_context(self, observation: Mapping[str, Any]) -> dict[str, Any]:
         return {"phase": "task", "goal_position": self.get_goal()}
 
+    def update_task_state(self, observation: Mapping[str, Any]) -> None:
+        del observation
+
     def compute_metrics(self, observation: Mapping[str, Any]) -> dict[str, float]:
         return {}
 
     def evaluate(self, observation: Mapping[str, Any]) -> FeagineTaskEvaluation:
+        self.update_task_state(observation)
         return FeagineTaskEvaluation(
             reward=float(self.compute_reward(observation)),
             success=bool(self.compute_success(observation)),

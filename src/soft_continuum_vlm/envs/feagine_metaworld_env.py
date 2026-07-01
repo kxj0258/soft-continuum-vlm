@@ -49,8 +49,9 @@ class FeagineMetaWorldEnv:
         raw_observation, _backend_reward, backend_done, backend_info = self.backend.step(
             runtime_action
         )
+        provisional_observation = self._with_task_info(raw_observation)
+        evaluation = self.task.evaluate(provisional_observation)
         self._observation = self._with_task_info(raw_observation)
-        evaluation = self.task.evaluate(self._observation)
 
         self._ik_attempts += 1
         self._ik_successes += int(conversion.ik_result.success)

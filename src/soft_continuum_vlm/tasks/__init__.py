@@ -6,6 +6,14 @@ from soft_continuum_vlm.tasks.feagine_metaworld_task import (
     FeagineMetaWorldTask,
     FeagineTaskEvaluation,
 )
+from soft_continuum_vlm.tasks.feagine_push_tasks import (
+    FEAGINE_PUSH_TASKS,
+    FeagineContactPushTask,
+    FeaginePushLeftToRightTask,
+    FeaginePushRightToLeftTask,
+    FeaginePushTask,
+    make_feagine_push_task,
+)
 from soft_continuum_vlm.tasks.feagine_reach_tasks import (
     FEAGINE_REACH_TASKS,
     FeagineReach3DTask,
@@ -21,8 +29,13 @@ from soft_continuum_vlm.tasks.rotate_place_task import RotatePlaceTask
 __all__ = [
     "BaseTask",
     "ContactPushTask",
+    "FEAGINE_PUSH_TASKS",
     "FEAGINE_REACH_TASKS",
+    "FeagineContactPushTask",
     "FeagineMetaWorldTask",
+    "FeaginePushLeftToRightTask",
+    "FeaginePushRightToLeftTask",
+    "FeaginePushTask",
     "FeagineReach3DTask",
     "FeagineReachLeftTask",
     "FeagineReachRightTask",
@@ -32,5 +45,6 @@ __all__ = [
     "PickTask",
     "RotatePlaceTask",
     "TaskSpec",
+    "make_feagine_push_task",
     "make_feagine_reach_task",
 ]

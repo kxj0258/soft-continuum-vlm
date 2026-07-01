@@ -458,7 +458,7 @@ success = distance(tip, goal) < threshold
 
 ### 任务
 
-* [ ] 新增任务：
+* [x] 新增任务：
 
 ```text
 feagine_push_left_to_right
@@ -467,9 +467,9 @@ feagine_contact_push
 ```
 
 * [ ] 物体放在左侧或右侧架子/平台上。
-* [ ] 目标区域放在另一侧。
+* [x] 目标区域放在另一侧。
 * [ ] 末端通过接触推动物体移动。
-* [ ] 记录接触力、穿透深度、物体位移。
+* [x] 记录接触力、穿透深度、物体位移。
 
 ### Reward
 
@@ -1024,8 +1024,8 @@ OpenVLA
 * [x] 实现 `feagine_reach_left`。
 * [x] 实现 `feagine_reach_right`。
 * [x] 实现 `feagine_reach_3d`。
-* [ ] 实现 `feagine_push_left_to_right`。
-* [ ] 实现 `feagine_push_right_to_left`。
+* [x] 实现 `feagine_push_left_to_right`。
+* [x] 实现 `feagine_push_right_to_left`。
 
 ## Phase 3：Pick-Place 任务
 

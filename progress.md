@@ -20,6 +20,9 @@
 - M4 已提交为 `95c857f Add Feagine 4D action adapter`。
 - M5 已增加 MetaWorld 风格任务抽象、Reach Left/Right/3D、任务注册、4D backend wrapper、IK/距离指标、deterministic Reach expert、配置、设计文档和目标测试。
 - M5 测试未运行，验收状态保持待验证。
+- M5 已提交为 `20418bc Add MetaWorld-style Feagine reach tasks`。
+- M6a 已增加 Push Left-to-Right、Right-to-Left、Contact Push、接触归因、力/穿透奖励、状态阶段、4D deterministic Push expert、配置、设计文档和目标测试。
+- M6a 测试未运行，验收状态保持待验证。
 
 ## 历史进度摘要
 

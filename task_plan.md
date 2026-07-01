@@ -21,19 +21,19 @@
 - [ ] M3：实现统一 IK 接口、PCC IK、微分 IK 和安全回退（代码已完成，等待用户手动验证）。
 - [ ] M4：实现 `FeagineActionAdapter` 与自动夹爪姿态控制（代码已完成，等待用户手动验证）。
 - [ ] M5：实现 MetaWorld 风格任务基类与 Reach 任务纵向链路（代码已完成，等待用户手动验证）。
-- [ ] M6：实现 Push 和 Pick-Place 任务及 deterministic experts。
+- [ ] M6：实现 Push 和 Pick-Place 任务及 deterministic experts（M6a Push 代码已完成，Pick-Place 待实现）。
 - [ ] M7：实现 Gymnasium 环境与 RL baseline 接口。
 - [ ] M8：实现双相机、多模态 observation、轨迹与回放工具。
 - [ ] M9：实现 deterministic VLM planner、skills、数据导出和 VLA 接口。
 - [ ] M10：实现复杂任务与统一论文评估协议。
 
-## 当前窄步骤：M5
+## 当前窄步骤：M6a Push
 
-1. 定义新的 `FeagineMetaWorldTask` 抽象、任务结果和上下文接口。
-2. 先增加 Reach reward/success、随机目标、4D wrapper 链路和 expert 的目标测试，但不执行。
-3. 实现 Reach Left、Reach Right、Reach 3D 与任务注册。
-4. 实现 4D action wrapper：Adapter → runtime action → backend → task reward/info。
-5. 增加 deterministic Reach expert、配置、文档和进度记录，并创建原子提交。
+1. 为任务基类增加状态更新 hook，并让 wrapper 返回更新后的 task phase。
+2. 先增加 Push reward/success、接触归因、阶段切换和 expert 的目标测试，但不执行。
+3. 实现 left-to-right、right-to-left 和 contact-push 三种任务及注册。
+4. 实现只输出 4D action 的 deterministic Push expert。
+5. 增加配置、文档、TODO 与进度记录，并创建原子提交。
 
 ## 已知约束与风险
 
@@ -44,12 +44,14 @@
 - M3 solver 仍使用近似 PCC 后端；真实 Feagine 标定应通过同一 `IkSolver` 接口注入，而不是改变上层 action 契约。
 - M4 尚未直接改写 `FeagineMujocoEnv.step()`；M5 的统一任务/环境流程应调用 `command.to_runtime_action()` 进入现有低层 runtime。
 - M5 默认 Reach 坐标来自保守的相对布局，还不能替代 M2 的真实 MuJoCo 工作空间与碰撞复核结果。
+- M6a 只消费已有 object/contact observation，不修改 MuJoCo 场景；物体、摩擦、接触力和目标坐标必须在真实场景中复核。
 
 ## 错误记录
 
 | 错误 | 尝试 | 处理 |
 |---|---|---|
 | 读取不存在的 `src/soft_continuum_vlm/envs/base.py` | 按常见命名检查环境基类 | `rg` 已确认实际文件为 `base_env.py`，后续改读该文件 |
+| 一次补丁把 `todolist.md` 上下文误放到测试文件 hunk | 合并修改 Push task、测试和 TODO | 拆分为各文件的精确 hunk 后成功应用，未重复错误操作 |
 
 ## 既有阶段记录
 

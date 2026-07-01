@@ -18,6 +18,7 @@ from soft_continuum_vlm.controllers.ik import (
     solve_with_retries,
 )
 from soft_continuum_vlm.controllers.pcc_ik_controller import PccIkController
+from soft_continuum_vlm.controllers.push_expert import FeaginePushExpert
 from soft_continuum_vlm.controllers.reach_expert import FeagineReachExpert
 from soft_continuum_vlm.controllers.safety_projector import SafetyLimits, SafetyProjector
 from soft_continuum_vlm.controllers.scripted_expert import ScriptedExpert
@@ -29,6 +30,7 @@ __all__ = [
     "FeagineActionAdapterConfig",
     "FeagineActionConversion",
     "FeagineLowLevelCommand",
+    "FeaginePushExpert",
     "FeagineReachExpert",
     "GrasperOrientationController",
     "IkResult",

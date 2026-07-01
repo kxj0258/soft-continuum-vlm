@@ -1,0 +1,10 @@
+task:
+  name: feagine_contact_push
+  language: Use controlled contact to push the object into the target region.
+  object_name: push_object
+  goal_position: [0.0, 0.08, 0.20]
+  approach_threshold: 0.04
+  success_threshold: 0.03
+  max_contact_force: 5.0
+  max_penetration: 0.01
+  action_interface: feagine_4d_delta_tip
