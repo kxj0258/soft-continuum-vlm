@@ -149,6 +149,58 @@ class FeagineMujocoEnv(BaseRobotEnv):
     def get_robot_state(self) -> Mapping[str, Any]:
         return dict(self._observation.get("robot_state", {}))
 
+    def probe_tip_position_for_section_angles(
+        self,
+        section_angles: Sequence[float],
+    ) -> list[float]:
+        """Forward MuJoCo at a candidate section command without advancing time."""
+
+        if self._model is None or self._data is None or self._robot is None:
+            self.reset()
+        assert self._model is not None
+        assert self._data is not None
+        assert self._robot is not None
+        candidate = self._as_float_sequence(section_angles, "section_angles")
+        expected = int(self._robot.section_count) * 2
+        if len(candidate) != expected:
+            raise ValueError(f"section_angles must contain {expected} values, got {len(candidate)}.")
+
+        original_section_angles = self._read_section_angles()
+        qpos = np.asarray(getattr(self._data, "qpos", [])).copy()
+        qvel = np.asarray(getattr(self._data, "qvel", [])).copy()
+        ctrl = np.asarray(getattr(self._data, "ctrl", [])).copy()
+        time = float(getattr(self._data, "time", 0.0))
+        modules = self.ensure_runtime_available()
+        mujoco = modules["mujoco"]
+
+        self._robot.drive_section_angles(candidate)
+        for _ in range(self.config.physics_steps_per_action):
+            mujoco.mj_step(self._model, self._data)
+        tip = self._read_tip_pose()["position"]
+
+        self._restore_probe_state(qpos=qpos, qvel=qvel, ctrl=ctrl, time=time)
+        if len(original_section_angles) == expected:
+            self._robot.drive_section_angles(original_section_angles)
+            self._forward()
+        return [float(value) for value in tip]
+
+    def _restore_probe_state(
+        self,
+        *,
+        qpos: np.ndarray,
+        qvel: np.ndarray,
+        ctrl: np.ndarray,
+        time: float,
+    ) -> None:
+        assert self._data is not None
+        self._assign_vector(self._data.qpos, qpos)
+        self._assign_vector(self._data.qvel, qvel)
+        if hasattr(self._data, "ctrl") and ctrl.size:
+            self._assign_vector(self._data.ctrl, ctrl)
+        if hasattr(self._data, "time"):
+            self._data.time = float(time)
+        self._forward()
+
     def _load_runtime(self) -> None:
         modules = self.ensure_runtime_available()
         feagine_mujoco = modules["feagine_mujoco"]

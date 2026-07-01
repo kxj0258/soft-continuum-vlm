@@ -13,6 +13,9 @@ if str(SRC_ROOT) not in sys.path:
 from soft_continuum_vlm.utils.paths import feagine_root  # noqa: E402
 
 
+PREFERRED_ROBOT_PRESETS = ("a03_type_2", "a03")
+
+
 def _try_import(module_name: str, *, required: bool) -> object | None:
     try:
         module = importlib.import_module(module_name)
@@ -50,13 +53,27 @@ def _print_asset_path(mujoco_module: object) -> Path | None:
     if robot_asset_path is None:
         print("[ERROR] feagine_mujoco.robot_asset_path is not available.")
         return None
-    try:
-        asset_path = Path(robot_asset_path(model_type="mjcf")).expanduser().resolve()
-    except Exception as exc:  # pragma: no cover - depends on external runtime
-        print(f"[ERROR] feagine_mujoco.robot_asset_path(model_type='mjcf') failed: {exc}")
-        return None
-    print(f"[OK] feagine_mujoco.robot_asset_path(model_type='mjcf'): {asset_path}")
-    return asset_path
+
+    errors: list[str] = []
+    for preset_id in PREFERRED_ROBOT_PRESETS:
+        try:
+            asset_path = Path(
+                robot_asset_path(preset_id=preset_id, model_type="mjcf")
+            ).expanduser().resolve()
+        except Exception as exc:  # pragma: no cover - depends on external runtime
+            errors.append(f"{preset_id}: {exc}")
+            continue
+        print(
+            "[OK] feagine_mujoco.robot_asset_path("
+            f"preset_id='{preset_id}', model_type='mjcf'): {asset_path}"
+        )
+        return asset_path
+
+    print(
+        "[ERROR] feagine_mujoco.robot_asset_path failed for presets "
+        f"{list(PREFERRED_ROBOT_PRESETS)}. Errors: {'; '.join(errors)}"
+    )
+    return None
 
 
 def _check_a03_type_2(asset_path: Path | None) -> None:
@@ -64,9 +81,8 @@ def _check_a03_type_2(asset_path: Path | None) -> None:
         print("[WARNING] Cannot inspect a03_type_2 resources because asset path is unavailable.")
         return
     search_root = asset_path if asset_path.is_dir() else asset_path.parent
-    matches = list(search_root.rglob("*a03_type_2*"))
-    if matches:
-        print(f"[OK] Found a03_type_2 related resource: {matches[0]}")
+    if "a03_type_2" in search_root.parts:
+        print(f"[OK] Found a03_type_2 preset asset path: {asset_path}")
     elif (search_root / "preset.yaml").exists() and "a03_type_2" in (search_root / "preset.yaml").read_text(
         encoding="utf-8"
     ):

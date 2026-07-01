@@ -219,6 +219,31 @@ Run the minimal mock demo headlessly:
 python scripts/run_demo_env.py --headless
 ```
 
+Manually test the current 4D MetaWorld-style task contracts without launching
+MuJoCo or training:
+
+```powershell
+pytest tests/test_action_space.py tests/test_feagine_action_adapter.py tests/test_feagine_metaworld_reach.py tests/test_feagine_push_tasks.py tests/test_feagine_pick_place_tasks.py tests/test_feagine_gym_state_env.py
+```
+
+The current state-only Gymnasium-style wrapper is `FeagineGymStateEnv`. It
+returns `reset() -> (observation, info)` and
+`step(action_4d) -> (observation, reward, terminated, truncated, info)` while
+reusing the existing 4D action adapter. It intentionally does not import
+Gymnasium or run PPO/SAC/TD3 yet.
+
+Run the current real Feagine/MuJoCo 4D Reach smoke rollout headlessly:
+
+```powershell
+python scripts/run_feagine_metaworld_reach.py --task feagine_reach_right --steps 50 --seed 0 --headless --output outputs/diagnostics/feagine_reach_right_smoke.json
+```
+
+This command uses `FeagineReachExpert` to emit only normalized 4D actions, then
+logs the converted low-level Feagine command and IK/task metrics. It is a Reach
+smoke validation only; it does not validate Push, Pick-Place, or RL training.
+Omit `--headless` or pass `--render-mode human` only when you explicitly want a
+MuJoCo viewer window.
+
 Inspect real Feagine/MuJoCo model names from config:
 
 ```powershell

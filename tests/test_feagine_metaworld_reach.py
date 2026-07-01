@@ -38,6 +38,17 @@ def test_reach_task_uses_negative_distance_reward_and_threshold_success() -> Non
     assert task.compute_success(far) is False
     assert task.compute_success(near) is True
     assert task.get_goal() == [-0.1, 0.0, 0.3]
+    assert task.get_task_info()["goal_mode"] == "fixed_world"
+
+
+def test_reach_task_defaults_to_reset_tip_relative_goal() -> None:
+    task = FeagineReachRightTask()
+    task.reset_task(seed=0, observation=_observation(tip=[0.2, -0.1, 0.35]))
+
+    np.testing.assert_allclose(task.get_goal(), [0.28, -0.1, 0.35])
+    info = task.get_task_info()
+    assert info["goal_offset"] == [0.08, 0.0, 0.0]
+    assert info["goal_mode"] == "reset_tip_relative"
 
 
 def test_reach_3d_goal_sampling_is_seeded_and_inside_bounds() -> None:
@@ -48,7 +59,8 @@ def test_reach_3d_goal_sampling_is_seeded_and_inside_bounds() -> None:
     second.reset_task(seed=11, observation=_observation())
 
     assert first.get_goal() == second.get_goal()
-    goal = np.asarray(first.get_goal())
+    reset_tip = np.asarray(_observation()["robot_state"]["tip_pose"]["position"], dtype=np.float64)
+    goal = np.asarray(first.get_goal()) - reset_tip
     low = np.asarray(first.goal_low)
     high = np.asarray(first.goal_high)
     assert np.all(goal >= low)

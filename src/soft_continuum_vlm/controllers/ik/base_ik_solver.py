@@ -108,11 +108,30 @@ def section_angles(
     expected: int,
     max_abs_section_angle: float,
 ) -> np.ndarray:
-    array = np.asarray(value, dtype=np.float64)
+    array = np.asarray(value, dtype=np.float64).copy()
     if array.shape != (expected,) or not np.all(np.isfinite(array)):
         raise ValueError(f"section_angles must contain {expected} finite values.")
-    if np.any(np.abs(array) > float(max_abs_section_angle) + 1e-12):
+    if expected % 2 != 0:
+        raise ValueError("section_angles must contain bend/direction pairs.")
+    if np.any(np.abs(array[0::2]) > float(max_abs_section_angle) + 1e-12):
         raise ValueError("current section_angles exceed the configured limit.")
+    array[1::2] = _wrap_angles_to_pi(array[1::2])
+    return array
+
+
+def clip_section_angles(
+    value: Sequence[float],
+    *,
+    max_abs_section_angle: float,
+) -> np.ndarray:
+    """Clip bend magnitudes while preserving section direction-angle semantics."""
+
+    array = np.asarray(value, dtype=np.float64).copy()
+    if array.ndim != 1 or array.size % 2 != 0 or not np.all(np.isfinite(array)):
+        raise ValueError("section_angles must contain finite bend/direction pairs.")
+    limit = float(max_abs_section_angle)
+    array[0::2] = np.clip(array[0::2], -limit, limit)
+    array[1::2] = _wrap_angles_to_pi(array[1::2])
     return array
 
 
@@ -121,3 +140,8 @@ def _point3(value: Sequence[float], label: str) -> np.ndarray:
     if array.shape != (3,) or not np.all(np.isfinite(array)):
         raise ValueError(f"{label} must contain exactly three finite values.")
     return array
+
+
+def _wrap_angles_to_pi(values: np.ndarray) -> np.ndarray:
+    wrapped = (values + np.pi) % (2.0 * np.pi) - np.pi
+    return np.where(np.isclose(wrapped, -np.pi) & (values > 0.0), np.pi, wrapped)

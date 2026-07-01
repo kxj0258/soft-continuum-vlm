@@ -169,6 +169,15 @@ class FeaginePickPlaceTask(FeagineMetaWorldTask):
             "lift_height": float(self.lift_height),
             "approach_threshold": float(self.approach_threshold),
             "place_threshold": float(self.place_threshold),
+            "metric_keys": [
+                "tip_object_distance",
+                "object_goal_distance",
+                "object_lift",
+                "grasp_success",
+                "lift_success",
+                "place_success",
+                "phase_index",
+            ],
         }
 
     def get_task_context(self, observation: Mapping[str, Any]) -> dict[str, Any]:

@@ -1,5 +1,6 @@
 import numpy as np
 
+from soft_continuum_vlm.controllers.continuum_kinematics import ContinuumGeometry
 from soft_continuum_vlm.workspace import (
     fit_workspace_ellipsoid,
     recommend_task_regions,
@@ -8,8 +9,9 @@ from soft_continuum_vlm.workspace import (
 
 
 def test_pcc_workspace_sampling_is_deterministic_and_bounded() -> None:
-    first = sample_pcc_workspace(num_samples=32, seed=7)
-    second = sample_pcc_workspace(num_samples=32, seed=7)
+    geometry = ContinuumGeometry(max_abs_section_angle=0.8)
+    first = sample_pcc_workspace(num_samples=32, seed=7, geometry=geometry)
+    second = sample_pcc_workspace(num_samples=32, seed=7, geometry=geometry)
 
     np.testing.assert_allclose(first.section_angles, second.section_angles)
     np.testing.assert_allclose(first.tip_positions, second.tip_positions)

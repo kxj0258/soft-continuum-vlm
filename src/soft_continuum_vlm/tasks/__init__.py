@@ -35,9 +35,26 @@ from soft_continuum_vlm.tasks.obstacle_avoid_pick_task import ObstacleAvoidPickT
 from soft_continuum_vlm.tasks.pick_task import PickTask
 from soft_continuum_vlm.tasks.rotate_place_task import RotatePlaceTask
 
+
+FEAGINE_METAWORLD_TASKS = {
+    **FEAGINE_REACH_TASKS,
+    **FEAGINE_PUSH_TASKS,
+    **FEAGINE_PICK_PLACE_TASKS,
+}
+
+
+def make_feagine_metaworld_task(name: str) -> FeagineMetaWorldTask:
+    try:
+        task_type = FEAGINE_METAWORLD_TASKS[name]
+    except KeyError as exc:
+        raise ValueError(f"Unknown Feagine MetaWorld task: {name}") from exc
+    return task_type()
+
+
 __all__ = [
     "BaseTask",
     "ContactPushTask",
+    "FEAGINE_METAWORLD_TASKS",
     "FEAGINE_PICK_PLACE_TASKS",
     "FEAGINE_PUSH_TASKS",
     "FEAGINE_REACH_TASKS",
@@ -60,6 +77,7 @@ __all__ = [
     "PickTask",
     "RotatePlaceTask",
     "TaskSpec",
+    "make_feagine_metaworld_task",
     "make_feagine_pick_place_task",
     "make_feagine_push_task",
     "make_feagine_reach_task",

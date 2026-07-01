@@ -13,6 +13,7 @@ from soft_continuum_vlm.controllers.continuum_kinematics import (
 from soft_continuum_vlm.controllers.ik.base_ik_solver import (
     IkResult,
     IkSolver,
+    clip_section_angles,
     point3,
     section_angles,
 )
@@ -87,10 +88,9 @@ class PccIkSolver(IkSolver):
             delta_norm = float(np.linalg.norm(delta))
             if delta_norm > self.config.max_step_norm > 0.0:
                 delta *= self.config.max_step_norm / delta_norm
-            candidate = np.clip(
+            candidate = clip_section_angles(
                 angles + delta,
-                -self.geometry.max_abs_section_angle,
-                self.geometry.max_abs_section_angle,
+                max_abs_section_angle=self.geometry.max_abs_section_angle,
             )
             if float(np.linalg.norm(candidate - angles)) <= self.config.min_step_norm:
                 return IkResult.failure(

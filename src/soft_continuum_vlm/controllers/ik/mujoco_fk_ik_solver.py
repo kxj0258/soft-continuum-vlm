@@ -1,15 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Sequence
+from typing import Protocol, Sequence
 
 import numpy as np
 
-from soft_continuum_vlm.controllers.continuum_kinematics import (
-    ContinuumGeometry,
-    numeric_jacobian_tip_delta,
-    section_angles_to_tip_delta,
-)
+from soft_continuum_vlm.controllers.continuum_kinematics import ContinuumGeometry
 from soft_continuum_vlm.controllers.ik.base_ik_solver import (
     IkResult,
     IkSolver,
@@ -19,24 +15,37 @@ from soft_continuum_vlm.controllers.ik.base_ik_solver import (
 )
 
 
+class TipPositionProbe(Protocol):
+    def probe_tip_position_for_section_angles(
+        self,
+        section_angles: Sequence[float],
+    ) -> Sequence[float]:
+        """Return the MuJoCo-forwarded tip position for a low-level command."""
+
+
 @dataclass(frozen=True)
-class DifferentialIkConfig:
+class MujocoFkIkConfig:
     position_tolerance: float = 1e-4
     max_step_norm: float = 0.08
+    finite_difference_eps: float = 1e-4
     min_progress: float = 1e-12
 
 
-class DifferentialIkSolver(IkSolver):
-    """One damped-Jacobian step for continuous small Cartesian commands."""
+class MujocoFkDifferentialIkSolver(IkSolver):
+    """One-step differential IK using the backend's real MuJoCo FK response."""
 
     def __init__(
         self,
-        config: DifferentialIkConfig | None = None,
+        probe: TipPositionProbe,
+        config: MujocoFkIkConfig | None = None,
         *,
         geometry: ContinuumGeometry | None = None,
     ) -> None:
-        self.config = config or DifferentialIkConfig()
+        self.probe = probe
+        self.config = config or MujocoFkIkConfig()
         self.geometry = geometry or ContinuumGeometry()
+        if self.config.finite_difference_eps <= 0.0:
+            raise ValueError("finite_difference_eps must be positive.")
 
     def solve(
         self,
@@ -51,11 +60,10 @@ class DifferentialIkSolver(IkSolver):
             expected=2 * self.geometry.section_count,
             max_abs_section_angle=self.geometry.max_abs_section_angle,
         )
-        model_tip = section_angles_to_tip_delta(current_angles, self.geometry)
         current_tip = (
             point3(current_tip_position, "current_tip_position")
             if current_tip_position is not None
-            else model_tip
+            else self._probe(current_angles)
         )
         error = target - current_tip
         initial_error_norm = float(np.linalg.norm(error))
@@ -70,7 +78,7 @@ class DifferentialIkSolver(IkSolver):
                 status="converged",
             )
 
-        jacobian = numeric_jacobian_tip_delta(current_angles, self.geometry)
+        jacobian = self._numeric_jacobian(current_angles)
         matrix = jacobian @ jacobian.T + (self.geometry.damping**2) * np.eye(3)
         try:
             delta = jacobian.T @ np.linalg.solve(matrix, error)
@@ -79,13 +87,12 @@ class DifferentialIkSolver(IkSolver):
         delta_norm = float(np.linalg.norm(delta))
         if delta_norm > self.config.max_step_norm > 0.0:
             delta *= self.config.max_step_norm / delta_norm
+
         next_angles = clip_section_angles(
             current_angles + delta,
             max_abs_section_angle=self.geometry.max_abs_section_angle,
         )
-        achieved = current_tip + (
-            section_angles_to_tip_delta(next_angles, self.geometry) - model_tip
-        )
+        achieved = self._probe(next_angles)
         residual = float(np.linalg.norm(target - achieved))
         if not np.all(np.isfinite(next_angles)) or residual >= initial_error_norm - self.config.min_progress:
             return IkResult.failure(
@@ -104,4 +111,29 @@ class DifferentialIkSolver(IkSolver):
             position_error_norm=residual,
             iterations=1,
             status="converged" if converged else "step_applied",
+        )
+
+    def _numeric_jacobian(self, current_angles: np.ndarray) -> np.ndarray:
+        eps = float(self.config.finite_difference_eps)
+        jacobian = np.zeros((3, current_angles.size), dtype=np.float64)
+        for index in range(current_angles.size):
+            plus = current_angles.copy()
+            minus = current_angles.copy()
+            plus[index] += eps
+            minus[index] -= eps
+            plus = clip_section_angles(
+                plus,
+                max_abs_section_angle=self.geometry.max_abs_section_angle,
+            )
+            minus = clip_section_angles(
+                minus,
+                max_abs_section_angle=self.geometry.max_abs_section_angle,
+            )
+            jacobian[:, index] = (self._probe(plus) - self._probe(minus)) / (2.0 * eps)
+        return jacobian
+
+    def _probe(self, angles: Sequence[float]) -> np.ndarray:
+        return point3(
+            self.probe.probe_tip_position_for_section_angles(angles),
+            "probe_tip_position",
         )

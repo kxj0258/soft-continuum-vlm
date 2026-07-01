@@ -1,16 +1,21 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from typing import Sequence
 
 import numpy as np
+
+
+FEAGINE_MAX_BEND_DEG = 135.0
+FEAGINE_MAX_BEND_RAD = math.radians(FEAGINE_MAX_BEND_DEG)
 
 
 @dataclass(frozen=True)
 class ContinuumGeometry:
     section_count: int = 3
     section_length: float = 0.10
-    max_abs_section_angle: float = 0.8
+    max_abs_section_angle: float = FEAGINE_MAX_BEND_RAD
     damping: float = 1e-3
 
 

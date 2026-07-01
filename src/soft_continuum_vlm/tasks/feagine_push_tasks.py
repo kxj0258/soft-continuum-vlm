@@ -115,6 +115,17 @@ class FeaginePushTask(FeagineMetaWorldTask):
             "success_threshold": float(self.success_threshold),
             "max_contact_force": float(self.max_contact_force),
             "max_penetration": float(self.max_penetration),
+            "metric_keys": [
+                "tip_object_distance",
+                "object_goal_distance",
+                "object_displacement",
+                "max_contact_force",
+                "max_penetration",
+                "target_contact_flag",
+                "target_contact_count",
+                "target_contact_seen",
+                "wrong_contact_count",
+            ],
         }
 
     def get_task_context(self, observation: Mapping[str, Any]) -> dict[str, Any]:

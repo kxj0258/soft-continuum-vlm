@@ -4,7 +4,8 @@ ik:
   geometry:
     section_count: 3
     section_length: 0.10
-    max_abs_section_angle: 0.8
+    # Matches the Feagine UI bend limit: 135 deg = 2.356194490192345 rad.
+    max_abs_section_angle: 2.356194490192345
     damping: 0.001
   pcc:
     max_iterations: 80
