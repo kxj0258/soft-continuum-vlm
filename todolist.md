@@ -506,7 +506,7 @@ reward =
 
 ### 任务
 
-* [ ] 新增任务：
+* [x] 新增任务：
 
 ```text
 feagine_pick_left_place_right
@@ -517,7 +517,7 @@ feagine_pick_shelf_place_shelf
 * [ ] pick 点放在左侧中等高度架子上。
 * [ ] place 点放在右侧中等高度架子上。
 * [ ] 架子高度位于 Feagine 工作空间中部。
-* [ ] 初期不要求复杂避障。
+* [x] 初期不要求复杂避障。
 * [ ] 后续加入中间障碍物或狭窄通道。
 
 ### 任务阶段
@@ -535,9 +535,9 @@ feagine_pick_shelf_place_shelf
 
 ### 夹爪旋转策略
 
-* [ ] 顶层 RL action 仍然只有 `gripper_control`。
-* [ ] `grasper_rotation` 由底层任务阶段控制器自动计算。
-* [ ] 初期可以使用规则策略：
+* [x] 顶层 RL action 仍然只有 `gripper_control`。
+* [x] `grasper_rotation` 由底层任务阶段控制器自动计算。
+* [x] 初期可以使用规则策略：
 
 ```text
 approach: grasper points to object
@@ -911,8 +911,8 @@ action = [dx, dy, dz, gripper_control]
 
 ### 任务
 
-* [ ] 为 reach/push/pick-place 编写 scripted expert。
-* [ ] 所有 expert 输出统一 4D action。
+* [x] 为 reach/push/pick-place 编写 scripted expert。
+* [x] 所有 expert 输出统一 4D action。
 * [ ] 采集成功轨迹和失败轨迹。
 * [ ] 保存每一步：
 
@@ -1029,10 +1029,10 @@ OpenVLA
 
 ## Phase 3：Pick-Place 任务
 
-* [ ] 实现左侧 pick、右侧 place。
-* [ ] 加入 grasper rotation 自动控制。
-* [ ] 加入 lift/place 阶段判断。
-* [ ] 实现 scripted expert。
+* [x] 实现左侧 pick、右侧 place。
+* [x] 加入 grasper rotation 自动控制。
+* [x] 加入 lift/place 阶段判断。
+* [x] 实现 scripted expert。
 * [ ] 采集 pick-place demos。
 
 ## Phase 4：RL Baseline

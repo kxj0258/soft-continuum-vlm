@@ -67,3 +67,10 @@
 - Push 任务需要轻量状态 `approach -> push -> complete`；任务基类应增加 `update_task_state()` hook，并由统一 `evaluate()` 在 reward/success/metrics 前调用。
 - 包装环境必须在 task evaluation 后重新注入 task info，确保返回 observation 中的 phase 是本步更新后的状态。
 - Push expert 应先移动到物体后方的预接触点，再沿 object→goal 方向推动，且始终输出打开夹爪的 4D action。
+
+## M6b Pick-Place 任务发现
+
+- 现有 object state 已约定 `pose.position`、`pose.orientation` 和可选 `grasped`，可作为新状态机的确定性输入。
+- Pick-Place 成功不能由“夹爪闭合”推断；抓取阶段必须观察 `object.grasped`，抬升必须比较 reset 时物体高度，放置必须同时满足目标距离和夹爪打开。
+- 八个操作阶段需要扩展为带终态的状态机：`approach -> align_grasper -> close_gripper -> lift -> transport -> align_place -> release -> retract -> complete`。
+- 为避免“已放到目标但未收回”提前结束，最终 success 只在 retract 距离达到且 place 条件仍成立时报告。

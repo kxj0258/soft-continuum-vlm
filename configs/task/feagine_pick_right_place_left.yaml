@@ -1,0 +1,13 @@
+task:
+  name: feagine_pick_right_place_left
+  language: Pick the object from the right shelf and place it on the left shelf.
+  object_name: pick_object
+  goal_position: [-0.08, 0.0, 0.20]
+  place_principal_axis: [1.0, 0.0, 0.0]
+  approach_threshold: 0.025
+  orientation_threshold: 0.12
+  lift_height: 0.06
+  transport_threshold: 0.035
+  place_threshold: 0.03
+  retract_distance: 0.05
+  action_interface: feagine_4d_delta_tip

@@ -23,6 +23,9 @@
 - M5 已提交为 `20418bc Add MetaWorld-style Feagine reach tasks`。
 - M6a 已增加 Push Left-to-Right、Right-to-Left、Contact Push、接触归因、力/穿透奖励、状态阶段、4D deterministic Push expert、配置、设计文档和目标测试。
 - M6a 测试未运行，验收状态保持待验证。
+- M6a 已提交为 `cca8dff Add MetaWorld-style Feagine push tasks`。
+- M6b 已增加三种 Pick-Place 任务、完整阶段状态机、严格 grasp/lift/place/retract 判定、自动姿态 context、4D deterministic expert、配置、设计文档和目标测试。
+- M6b 测试未运行，验收状态保持待验证。
 
 ## 历史进度摘要
 
