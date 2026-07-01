@@ -20,20 +20,20 @@
 - [ ] M2：实现 PCC 工作空间采样、椭球拟合与任务区域输出（离线后端代码已完成，等待手动验证和仿真碰撞复核）。
 - [ ] M3：实现统一 IK 接口、PCC IK、微分 IK 和安全回退（代码已完成，等待用户手动验证）。
 - [ ] M4：实现 `FeagineActionAdapter` 与自动夹爪姿态控制（代码已完成，等待用户手动验证）。
-- [ ] M5：实现 MetaWorld 风格任务基类与 Reach 任务纵向链路。
+- [ ] M5：实现 MetaWorld 风格任务基类与 Reach 任务纵向链路（代码已完成，等待用户手动验证）。
 - [ ] M6：实现 Push 和 Pick-Place 任务及 deterministic experts。
 - [ ] M7：实现 Gymnasium 环境与 RL baseline 接口。
 - [ ] M8：实现双相机、多模态 observation、轨迹与回放工具。
 - [ ] M9：实现 deterministic VLM planner、skills、数据导出和 VLA 接口。
 - [ ] M10：实现复杂任务与统一论文评估协议。
 
-## 当前窄步骤：M4
+## 当前窄步骤：M5
 
-1. 定义语义低层命令及 `grip_command` runtime 别名转换。
-2. 先增加动作缩放、观测解析、夹爪映射、自动旋转和 IK 失败保持的目标测试，但不执行。
-3. 实现 `FeagineActionAdapter.convert()` 与结构化转换结果。
-4. 默认使用微分 IK，并通过 M3 重试接口执行缩小增量回退。
-5. 更新公开导出、配置、设计文档、TODO 与进度记录，并创建原子提交。
+1. 定义新的 `FeagineMetaWorldTask` 抽象、任务结果和上下文接口。
+2. 先增加 Reach reward/success、随机目标、4D wrapper 链路和 expert 的目标测试，但不执行。
+3. 实现 Reach Left、Reach Right、Reach 3D 与任务注册。
+4. 实现 4D action wrapper：Adapter → runtime action → backend → task reward/info。
+5. 增加 deterministic Reach expert、配置、文档和进度记录，并创建原子提交。
 
 ## 已知约束与风险
 
@@ -43,6 +43,7 @@
 - 近似 PCC 工作空间不包含 MuJoCo 碰撞、穿模和真实结构误差，不能单独作为最终货架坐标依据。
 - M3 solver 仍使用近似 PCC 后端；真实 Feagine 标定应通过同一 `IkSolver` 接口注入，而不是改变上层 action 契约。
 - M4 尚未直接改写 `FeagineMujocoEnv.step()`；M5 的统一任务/环境流程应调用 `command.to_runtime_action()` 进入现有低层 runtime。
+- M5 默认 Reach 坐标来自保守的相对布局，还不能替代 M2 的真实 MuJoCo 工作空间与碰撞复核结果。
 
 ## 错误记录
 

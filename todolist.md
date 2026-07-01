@@ -372,13 +372,13 @@ still failed:
 
 ### 任务
 
-* [ ] 新增任务基类：
+* [x] 新增任务基类：
 
 ```text
 src/soft_continuum_vlm/tasks/feagine_metaworld_task.py
 ```
 
-* [ ] 每个任务统一包含：
+* [x] 每个任务统一包含：
 
 ```text
 reset_task()
@@ -389,7 +389,7 @@ get_object_state()
 get_task_info()
 ```
 
-* [ ] 环境 step 统一流程：
+* [x] 环境 step 统一流程：
 
 ```text
 4D action
@@ -422,7 +422,7 @@ reward / success / info
 
 ### 任务
 
-* [ ] 新增任务：
+* [x] 新增任务：
 
 ```text
 feagine_reach_left
@@ -430,9 +430,9 @@ feagine_reach_right
 feagine_reach_3d
 ```
 
-* [ ] 左侧 reach 目标放在机械臂左侧工作空间。
-* [ ] 右侧 reach 目标放在机械臂右侧工作空间。
-* [ ] 3D reach 在椭球工作空间内部随机采样目标点。
+* [x] 左侧 reach 目标放在机械臂左侧工作空间。
+* [x] 右侧 reach 目标放在机械臂右侧工作空间。
+* [x] 3D reach 在椭球工作空间内部随机采样目标点。
 
 ### Reward
 
@@ -1021,9 +1021,9 @@ OpenVLA
 
 ## Phase 2：基础任务
 
-* [ ] 实现 `feagine_reach_left`。
-* [ ] 实现 `feagine_reach_right`。
-* [ ] 实现 `feagine_reach_3d`。
+* [x] 实现 `feagine_reach_left`。
+* [x] 实现 `feagine_reach_right`。
+* [x] 实现 `feagine_reach_3d`。
 * [ ] 实现 `feagine_push_left_to_right`。
 * [ ] 实现 `feagine_push_right_to_left`。
 

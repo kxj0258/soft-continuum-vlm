@@ -1,0 +1,6 @@
+task:
+  name: feagine_reach_left
+  language: Move the Feagine tip to the left reach target.
+  goal_position: [-0.08, 0.0, 0.24]
+  success_threshold: 0.02
+  action_interface: feagine_4d_delta_tip

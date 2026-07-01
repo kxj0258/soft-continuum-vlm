@@ -1,0 +1,8 @@
+task:
+  name: feagine_reach_3d
+  language: Move the Feagine tip to the sampled three-dimensional target.
+  goal_low: [-0.08, -0.08, 0.20]
+  goal_high: [0.08, 0.08, 0.28]
+  sampling: ellipsoid
+  success_threshold: 0.02
+  action_interface: feagine_4d_delta_tip

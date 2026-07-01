@@ -51,3 +51,12 @@
 - 当前 runtime 只接受 `grip_command`，而新接口使用语义名 `gripper_open_close`；adapter 需要显式命令对象提供 runtime 别名转换，不能让两个名字在上层混用。
 - 当前 Feagine 约定为 `grip_command=0` 打开、`grip_command=1` 闭合，因此顶层 `[-1, 1]` 应线性映射到 `[0, 1]`。
 - 自主旋转应只读取 task context 和当前状态。默认保持当前角度；approach/grasp 可按目标方向或物体主轴对齐，transport/lift/retract 保持姿态。
+
+## M5 任务链路发现
+
+- 现有 `BaseTask`/`MockContinuumEnv` 仍围绕低层 action 字典和旧任务评估设计，直接改写会破坏既有 mock/数据管线。
+- M5 应新增独立 `FeagineMetaWorldTask` 和包装环境，把旧低层 backend 视为执行器；包装层是唯一暴露 4D action 的入口。
+- `FeagineMujocoEnv.reset()` 与 `MockContinuumEnv.reset()` 都接受额外关键字，因此包装层可统一传递 `seed`。
+- 新包装层应忽略 backend 自身 reward，使用任务对象计算 reward/success，同时保留 backend done/info 作为截断和诊断信息。
+- Reach expert 可以直接用 `(goal-tip)/delta_xyz_scale` 生成裁剪后的 4D action，并固定夹爪打开。
+- `FeagineMetaWorldEnv` 不从 `envs/__init__.py` 急切导出，避免 `controllers -> action_space -> envs.__init__ -> wrapper -> controllers` 的循环导入；调用方使用其完整模块路径。

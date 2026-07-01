@@ -17,6 +17,9 @@
 - M3 已提交为 `2a622cb Add unified Feagine IK solvers`。
 - M4 已增加 `FeagineActionAdapter`、语义低层命令、runtime alias、线性夹爪映射、任务阶段姿态控制、结构化转换结果、配置、设计文档和目标测试。
 - M4 测试未运行，验收状态保持待验证。
+- M4 已提交为 `95c857f Add Feagine 4D action adapter`。
+- M5 已增加 MetaWorld 风格任务抽象、Reach Left/Right/3D、任务注册、4D backend wrapper、IK/距离指标、deterministic Reach expert、配置、设计文档和目标测试。
+- M5 测试未运行，验收状态保持待验证。
 
 ## 历史进度摘要
 
