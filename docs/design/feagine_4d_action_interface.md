@@ -23,6 +23,11 @@ gripper_control:
 - `dx, dy, dz` 表示任务空间中的末端增量位移，而不是 section-level 关节角目标。
 - `gripper_control` 只表达高层开合意图，不直接承担夹爪旋转控制。
 - 所有未来 task、RL policy、VLM planner、VLA policy 和 scripted expert 都应以这个 4D 接口作为统一输出约定。
+- `dx, dy, dz` 默认使用世界坐标系，归一化值乘以 `delta_xyz_scale` 后得到单位为米的位移；默认缩放为 `0.01`。
+- `gripper_control=-1` 表示完全打开，`gripper_control=+1` 表示完全闭合，中间值表示连续的高层开合意图。
+
+当前依赖无关的动作空间定义位于
+`src/soft_continuum_vlm/envs/action_space.py`。它提供固定 `(4,)` shape、范围检查、裁剪和位移缩放；Gymnasium 包装器后续应复用该契约创建 `Box`，不得复制另一套范围定义。
 
 ## Low-level Feagine Command
 

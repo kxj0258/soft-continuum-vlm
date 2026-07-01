@@ -1,30 +1,54 @@
-# 任务计划
+# Feagine MetaWorld/VLM 路线执行计划
 
 ## 目标
 
-按三个粘贴文本顺序完成开发，并把 README 与其他 Markdown 文档改为中文说明，同时让文档命令适配当前 Windows 环境。
+按 `todolist.md` 的依赖顺序，以可验收窄步骤实现统一 4D action、工作空间建模、动作适配、任务、RL、视觉、数据和 VLM/VLA 链路。
 
-## 已完成阶段
+## 执行规则
 
-- [x] Stage 1：添加 MuJoCo 状态工具、SceneRegistry、结构化 Feagine observation、inspection 脚本、文档和测试。
-- [x] Stage 2：添加连续体近似运动学、非零 PCC IK、任务阶段专家、安全投影模式、采集/调试脚本、metrics、文档和测试。
-- [x] Stage 3：添加 policy 接口、AdapterPolicy、VLM planner IK policy、统一 rollout/evaluation、训练增强、图表导出、配置、文档和测试。
-- [x] 验证：运行 `pytest`、mock rollout、mock demo collection、mock policy evaluation、figure export，并确认真实 Feagine 命令在 runtime 缺失时清楚失败。
-- [x] 文档中文化：README、PLANS、experiments、data/outputs 说明和本地计划记录全部改为中文，命令示例改为 Windows 单行。
+- 当前开发分支：`codex/roadmap-implementation`。
+- 每个窄步骤完成后只提交该步骤涉及的文件，使用说明性 Git 提交信息。
+- 不自动 push、不改写历史、不提交生成的模型权重、数据集或 `outputs/` 产物。
+- 未经用户明确要求，不运行测试、验证、lint、format、build、install 或仿真命令。
+- 测试可以作为验收规范先写入，但必须明确标记为“未运行”。
+- Feagine 只能通过安装包、相对外部路径或 `FEAGINE_SIM_ROOT` 使用。
 
-## 约束
+## 阶段
 
-- 不复制或修改 `../feagine-simulation` 或 `../feagine_simulation`。
-- action schema 固定为 `section_angles`、`grip_command` 和 `grasper_rotation`。
-- 不引入 `gripper_rotation`。
-- 不下载 OpenVLA、Octo、VLM、VLA 或大型模型权重。
-- Feagine/MuJoCo 不可用时，测试和脚本必须清楚 skip 或失败。
-- mock-env 输出只能用于 CI/debug，不能作为论文结果。
-- 文档命令必须使用单行形式，不使用续行符。
+- [x] M0：提交已有 4D action 开发基线，提交 `3247ce1`。
+- [ ] M1：实现统一 4D action 数据契约、缩放映射和单元测试（代码已完成，等待用户手动验证）。
+- [ ] M2：实现 PCC 工作空间采样、椭球拟合与任务区域输出。
+- [ ] M3：实现统一 IK 接口、PCC IK、微分 IK 和安全回退。
+- [ ] M4：实现 `FeagineActionAdapter` 与自动夹爪姿态控制。
+- [ ] M5：实现 MetaWorld 风格任务基类与 Reach 任务纵向链路。
+- [ ] M6：实现 Push 和 Pick-Place 任务及 deterministic experts。
+- [ ] M7：实现 Gymnasium 环境与 RL baseline 接口。
+- [ ] M8：实现双相机、多模态 observation、轨迹与回放工具。
+- [ ] M9：实现 deterministic VLM planner、skills、数据导出和 VLA 接口。
+- [ ] M10：实现复杂任务与统一论文评估协议。
 
-## 遇到的问题
+## 当前窄步骤：M1
 
-| 问题 | 尝试 | 处理 |
+1. 检查现有 action 类型、环境边界和 Gymnasium 依赖。
+2. 先增加 4D action 契约的目标测试，但不执行。
+3. 实现 action 校验、裁剪和任务空间位移缩放。
+4. 更新公开导出与接口文档。
+5. 记录未运行验证并创建原子提交。
+
+## 已知约束与风险
+
+- 严格 TDD 要求运行红灯/绿灯测试，但仓库规则禁止自动运行；本路线采用“测试先写、用户手动运行”的降级方式。
+- 当前低层 runtime 仍使用 `section_angles`、`grasper_rotation`、`grip_command`，M1 不删除低层命令。
+- `gripper_control` 的正负方向必须在 M1 固定，后续不得由各任务自行解释。
+
+## 错误记录
+
+| 错误 | 尝试 | 处理 |
 |---|---|---|
-| PowerShell 默认输出把 UTF-8 中文附件显示成乱码。 | 直接 `Get-Content`。 | 使用显式 UTF-8 输出编码重新读取。 |
-| 当前 shell 缺少真实 Feagine/MuJoCo runtime。 | 运行 scene inspection 和真实 demo collection。 | 脚本清楚报告缺少 `pyfeagine_sim_core`、`feagine_mujoco` 或 `mujoco`，并且没有 fallback 到 mock。 |
+| 读取不存在的 `src/soft_continuum_vlm/envs/base.py` | 按常见命名检查环境基类 | `rg` 已确认实际文件为 `base_env.py`，后续改读该文件 |
+
+## 既有阶段记录
+
+- 已实现 MuJoCo 状态工具、SceneRegistry、结构化 Feagine observation、inspection 脚本、近似 PCC kinematics、`PccIkController`、`TaskPhaseExpert`、`SafetyProjector`、policy/rollout/evaluation 和 adapter 训练管线。
+- 既有完整验证记录为 `68 passed, 4 skipped`；该结果来自 2026-06-23，不代表当前 M1 改动已经通过验证。
+- 真实 Feagine inspection 和 collection 在当时环境中因缺少 runtime 清楚失败，没有回退到 mock。

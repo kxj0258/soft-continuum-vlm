@@ -11,6 +11,10 @@ action_interface:
     low: [-1.0, -1.0, -1.0, -1.0]
     high: [1.0, 1.0, 1.0, 1.0]
   delta_xyz_scale: 0.01
+  coordinate_frame: world
+  gripper_convention:
+    open: -1.0
+    closed: 1.0
 
 low_level_command:
   components:

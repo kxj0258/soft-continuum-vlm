@@ -190,20 +190,20 @@ gripper_control:
 
 ### 任务
 
-* [ ] 新增或重构 action space 定义：
+* [x] 新增或重构 action space 定义：
 
 ```text
 src/soft_continuum_vlm/envs/action_space.py
 ```
 
-* [ ] 设置 action range：
+* [x] 设置 action range：
 
 ```text
 dx, dy, dz ∈ [-1, 1]
 gripper_control ∈ [-1, 1]
 ```
 
-* [ ] 在环境内部进行尺度映射：
+* [x] 在环境内部进行尺度映射：
 
 ```text
 delta_xyz = action[:3] * delta_xyz_scale
