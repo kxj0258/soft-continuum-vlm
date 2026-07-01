@@ -27,3 +27,12 @@
 - 已存在近似 PCC kinematics、`PccIkController`、`TaskPhaseExpert`、`SafetyProjector`、policy、rollout 和 evaluation 管线。
 - 既有 mock 结果仅用于 CI/debug，不能作为论文结论。
 - 真实 Feagine runtime 缺失时必须清楚失败或 graceful skip。
+
+## M2 工作空间建模发现
+
+- 已有 `continuum_kinematics.py` 提供可替换的近似 PCC FK：`section_angles_to_tip_delta()`。
+- 已有 `scan_feagine_reachability.py` 强依赖 MuJoCo/Feagine，并针对少量手工命令和红色物体诊断；它不适合作为完整、可离线复现的工作空间模型。
+- M2 应新增纯数值核心，使用确定性随机采样和近似 PCC FK；仿真后端可在后续以同一输出 schema 接入。
+- 椭球拟合、任务区域划分和输出写入应与 MuJoCo 分离，确保 runtime 不可用时仍可单元测试。
+- M2 输出 schema 已固定为点云 NPY、包含椭球与推荐布局的 JSON，以及三维 PNG。
+- 推荐布局使用工作空间 5%-95% 分位范围和 `use_workspace_ratio` 安全收缩，避免直接把极值点作为货架中心。

@@ -150,6 +150,17 @@ Scan reachable Feagine tip poses:
 python scripts/scan_feagine_reachability.py --scene outputs/scenes/feagine_tabletop_scene_reachable.xml --output outputs/diagnostics/feagine_reachability.json
 ```
 
+Generate the deterministic approximate-PCC workspace model and recommended left/right task regions:
+
+```powershell
+python scripts/sweep_feagine_workspace.py --samples 5000 --seed 0 --output-dir outputs/workspace
+```
+
+This offline sweep writes `feagine_workspace_points.npy`, `feagine_workspace.json`, and
+`feagine_workspace.png`. Its approximate-PCC backend does not perform MuJoCo collision
+checks, so the proposed shelf regions must be confirmed with the real Feagine scene before
+the layout is frozen.
+
 Scan grasper-red contact locally:
 
 ```powershell

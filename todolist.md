@@ -63,17 +63,17 @@ gripper_open_close
 
 ### 任务
 
-* [ ] 编写 Feagine 工作空间采样脚本：
+* [x] 编写 Feagine 工作空间采样脚本：
 
 ```text
 scripts/sweep_feagine_workspace.py
 ```
 
-* [ ] 随机或网格采样 `section_angles`。
-* [ ] 通过正运动学或仿真读取末端 `tip_pose`。
-* [ ] 记录所有可达末端位置。
+* [x] 随机或网格采样 `section_angles`。
+* [x] 通过正运动学或仿真读取末端 `tip_pose`。
+* [x] 记录所有可达末端位置。
 * [ ] 过滤掉异常点、碰撞点、穿模点。
-* [ ] 输出三维点云：
+* [x] 输出三维点云：
 
 ```text
 outputs/workspace/feagine_workspace_points.npy
@@ -81,7 +81,7 @@ outputs/workspace/feagine_workspace.json
 outputs/workspace/feagine_workspace.png
 ```
 
-* [ ] 拟合工作空间椭球：
+* [x] 拟合工作空间椭球：
 
 ```text
 center

@@ -8,6 +8,9 @@
 - 未运行任何测试、验证、lint、format、build、install 或仿真命令。
 - M1 已增加依赖无关的 4D action space、范围校验、裁剪、任务空间缩放、公开导出、配置约定和目标单元测试。
 - M1 测试未运行，验收状态保持待验证。
+- M1 已提交为 `b2f7054 Add Feagine 4D action contract`。
+- M2 已增加离线 PCC 工作空间采样、有限值/高度过滤、PCA 椭球拟合、左右安全任务区、NPY/JSON/PNG 输出脚本和目标测试。
+- M2 测试与工作空间脚本均未运行；碰撞和穿模过滤仍等待真实 MuJoCo 后端复核。
 
 ## 历史进度摘要
 
