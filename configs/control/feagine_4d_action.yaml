@@ -1,0 +1,28 @@
+action_interface:
+  name: feagine_4d_delta_tip
+  shape: 4
+  convention: metaworld_style
+  components:
+    - dx
+    - dy
+    - dz
+    - gripper_control
+  range:
+    low: [-1.0, -1.0, -1.0, -1.0]
+    high: [1.0, 1.0, 1.0, 1.0]
+  delta_xyz_scale: 0.01
+
+low_level_command:
+  components:
+    - section_angles
+    - grasper_rotation
+    - gripper_open_close
+  runtime_field_aliases:
+    gripper_open_close: grip_command
+
+deprecation:
+  deprecated_top_level_action:
+    - section_angles
+  note: >
+    section_angles should only be used as a low-level Feagine command after
+    conversion from the 4D top-level action.

@@ -36,3 +36,52 @@ Default rules:
     - commands run
     - whether acceptance criteria passed
     - remaining issues
+
+## Project Instructions for Codex
+
+### Environment
+
+This project uses the following conda environment:
+
+```bash
+conda activate feagine_vlm
+```
+
+### Default testing policy
+
+Do not automatically run tests, validation commands, lint commands, format commands, build commands, installation commands, asset-sync commands, training commands, evaluation commands, MuJoCo rendering commands, or simulation launch commands after modifying code.
+
+Only run such commands when the user explicitly asks for them in the current task.
+
+Do not automatically run:
+
+```bash
+pip install -e .
+pytest
+python -m pytest
+python scripts/verify_feagine_install.py
+python scripts/inspect_feagine_scene.py
+python -m feagine_mujoco_dev.sync_assets --preset a03
+```
+
+Do not automatically launch:
+
+```text
+MuJoCo viewer
+headless simulation rollouts
+demo collection
+training scripts
+evaluation scripts
+rendering scripts
+asset synchronization commands
+```
+
+After making changes, report:
+
+1. Files changed
+2. What changed
+3. Whether tests were intentionally not run
+4. Recommended manual verification commands
+5. Risks or follow-up issues
+
+Never claim tests passed unless they were explicitly requested and actually run.

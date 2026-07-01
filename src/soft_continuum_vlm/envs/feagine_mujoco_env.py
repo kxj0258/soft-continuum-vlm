@@ -183,6 +183,11 @@ class FeagineMujocoEnv(BaseRobotEnv):
 
     def _apply_feagine_action(self, action: Action) -> list[str]:
         assert self._robot is not None
+        # TODO(feagine-4d-action): Keep this env accepting low-level Feagine
+        # commands. Expected future top-level input is [dx, dy, dz,
+        # gripper_control], and the integration path is caller ->
+        # FeagineActionAdapter -> {section_angles, grip_command,
+        # grasper_rotation} -> FeagineMujocoEnv.step(...).
         supported = {
             "section_angles",
             "grip_command",

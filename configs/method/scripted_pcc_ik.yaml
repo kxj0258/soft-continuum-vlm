@@ -1,3 +1,7 @@
+# TODO(feagine-4d-action): Keep this as the existing low-level controller schema.
+# Expected future top-level input is [dx, dy, dz, gripper_control], and the
+# integration path is task/policy -> FeagineActionAdapter -> {section_angles,
+# grip_command, grasper_rotation} before the runtime env consumes the command.
 method:
   name: scripted_pcc_ik
   controller: pcc_ik

@@ -21,7 +21,7 @@ The project currently has two layers of functionality.
 - `MockContinuumEnv` for CI/debug runs.
 - `FeagineMujocoEnv` wrapper for real Feagine/MuJoCo runtime entry points.
 - Structured observation schema with `rgb`, `depth`, `language`, `proprioception`, `robot_state`, `objects`, and `contact`.
-- Action schema aligned with Feagine runtime:
+- Current low-level Feagine runtime command schema:
 
 ```python
 action = {"section_angles": [...], "grip_command": 0.0, "grasper_rotation": 0.0}
@@ -75,6 +75,42 @@ python scripts/verify_feagine_install.py
 ```
 
 Feagine must stay outside this repository. Use the installed package, a relative external path, or `FEAGINE_SIM_ROOT`; do not copy `feagine-simulation/` or `feagine_simulation/` into this repo.
+
+## Development Baseline
+
+Default development environment:
+
+```powershell
+conda activate feagine_vlm
+```
+
+Baseline verification commands:
+
+```powershell
+pip install -e .
+pytest
+python scripts/verify_feagine_install.py
+```
+
+After any MuJoCo or Feagine scene change, run:
+
+```powershell
+python scripts/inspect_feagine_scene.py --config configs/env/feagine_mujoco_a03_type_2.yaml --steps 5 --print-bodies --print-geoms --print-sites --output outputs/scene_inspection/feagine_scene.json
+```
+
+Future top-level action interface baseline:
+
+```text
+Top-level action:
+[dx, dy, dz, gripper_control]
+
+Low-level Feagine command:
+section_angles + grasper_rotation + gripper_open_close
+```
+
+The old top-level `section_angles` action interface is deprecated for future development.
+Current runtime wrappers and diagnostics may still use low-level Feagine control fields such as
+`section_angles`, `grasper_rotation`, and `grip_command` until `FeagineActionAdapter` lands.
 
 ## Real Feagine Tabletop Commands
 
