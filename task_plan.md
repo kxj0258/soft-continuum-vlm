@@ -18,7 +18,7 @@
 - [x] M0：提交已有 4D action 开发基线，提交 `3247ce1`。
 - [ ] M1：实现统一 4D action 数据契约、缩放映射和单元测试（代码已完成，等待用户手动验证）。
 - [ ] M2：实现 PCC 工作空间采样、椭球拟合与任务区域输出（离线后端代码已完成，等待手动验证和仿真碰撞复核）。
-- [ ] M3：实现统一 IK 接口、PCC IK、微分 IK 和安全回退。
+- [ ] M3：实现统一 IK 接口、PCC IK、微分 IK 和安全回退（代码已完成，等待用户手动验证）。
 - [ ] M4：实现 `FeagineActionAdapter` 与自动夹爪姿态控制。
 - [ ] M5：实现 MetaWorld 风格任务基类与 Reach 任务纵向链路。
 - [ ] M6：实现 Push 和 Pick-Place 任务及 deterministic experts。
@@ -27,13 +27,13 @@
 - [ ] M9：实现 deterministic VLM planner、skills、数据导出和 VLA 接口。
 - [ ] M10：实现复杂任务与统一论文评估协议。
 
-## 当前窄步骤：M2
+## 当前窄步骤：M3
 
-1. 建立与 MuJoCo 解耦的工作空间采样、过滤和椭球拟合核心。
-2. 先增加确定性采样、拟合和左右任务区域的目标测试，但不执行。
-3. 新增 `scripts/sweep_feagine_workspace.py`，输出 NPY、JSON 和 PNG。
-4. 输出竖直居中底座及左右任务区域推荐配置。
-5. 记录未运行验证并创建原子提交。
+1. 定义纯 IK solver 抽象和结构化 `IkResult`。
+2. 先增加 PCC、微分 IK、缩小目标重试和最终保持的目标测试，但不执行。
+3. 基于现有近似 FK/数值 Jacobian 实现两套 solver。
+4. 实现有限值、角度限制、步长限制和安全回退。
+5. 更新公开导出、TODO 与进度记录，并创建原子提交。
 
 ## 已知约束与风险
 
@@ -41,6 +41,7 @@
 - 当前低层 runtime 仍使用 `section_angles`、`grasper_rotation`、`grip_command`，M1 不删除低层命令。
 - `gripper_control` 的正负方向必须在 M1 固定，后续不得由各任务自行解释。
 - 近似 PCC 工作空间不包含 MuJoCo 碰撞、穿模和真实结构误差，不能单独作为最终货架坐标依据。
+- M3 solver 仍使用近似 PCC 后端；真实 Feagine 标定应通过同一 `IkSolver` 接口注入，而不是改变上层 action 契约。
 
 ## 错误记录
 

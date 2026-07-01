@@ -329,8 +329,8 @@ gripper_open_close = gripper_mapper.map(
 
 ### 任务
 
-* [ ] 整理当前已有 PCC IK 模块。
-* [ ] 新增统一 IK 接口：
+* [x] 整理当前已有 PCC IK 模块。
+* [x] 新增统一 IK 接口：
 
 ```text
 src/soft_continuum_vlm/controllers/ik/base_ik_solver.py
@@ -338,9 +338,9 @@ src/soft_continuum_vlm/controllers/ik/pcc_ik_solver.py
 src/soft_continuum_vlm/controllers/ik/differential_ik_solver.py
 ```
 
-* [ ] `PccIkSolver` 用于较大范围目标点求解。
-* [ ] `DifferentialIkSolver` 用于小步长连续控制。
-* [ ] 支持求解失败时回退：
+* [x] `PccIkSolver` 用于较大范围目标点求解。
+* [x] `DifferentialIkSolver` 用于小步长连续控制。
+* [x] 支持求解失败时回退：
 
 ```text
 IK success:

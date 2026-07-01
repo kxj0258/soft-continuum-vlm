@@ -11,6 +11,9 @@
 - M1 已提交为 `b2f7054 Add Feagine 4D action contract`。
 - M2 已增加离线 PCC 工作空间采样、有限值/高度过滤、PCA 椭球拟合、左右安全任务区、NPY/JSON/PNG 输出脚本和目标测试。
 - M2 测试与工作空间脚本均未运行；碰撞和穿模过滤仍等待真实 MuJoCo 后端复核。
+- M2 已提交为 `e812d12 Add PCC workspace modeling pipeline`。
+- M3 已增加统一 `IkSolver`/`IkResult`、迭代 PCC IK、单步微分 IK、缩小目标重试、最终保持策略、配置、设计文档和目标测试。
+- M3 测试未运行，验收状态保持待验证。
 
 ## 历史进度摘要
 

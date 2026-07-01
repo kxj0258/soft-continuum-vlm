@@ -1,0 +1,16 @@
+ik:
+  default_solver: differential
+  retry_scales: [1.0, 0.5, 0.25]
+  geometry:
+    section_count: 3
+    section_length: 0.10
+    max_abs_section_angle: 0.8
+    damping: 0.001
+  pcc:
+    max_iterations: 80
+    position_tolerance: 0.0001
+    max_step_norm: 0.12
+  differential:
+    position_tolerance: 0.0001
+    max_step_norm: 0.08
+  failure_policy: hold_current

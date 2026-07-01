@@ -36,3 +36,11 @@
 - 椭球拟合、任务区域划分和输出写入应与 MuJoCo 分离，确保 runtime 不可用时仍可单元测试。
 - M2 输出 schema 已固定为点云 NPY、包含椭球与推荐布局的 JSON，以及三维 PNG。
 - 推荐布局使用工作空间 5%-95% 分位范围和 `use_workspace_ratio` 安全收缩，避免直接把极值点作为货架中心。
+
+## M3 IK 接口发现
+
+- 现有 `PccIkController` 面向低层 action 字典，并混合夹爪字段，不适合作为新的纯 IK solver 接口。
+- `continuum_kinematics.py` 已提供近似 FK 和数值 Jacobian，可作为 M3 两套 solver 的确定性后端。
+- 新 solver 应只负责 `target_tip_position + current_section_angles + current_tip_position -> IkResult`，不处理夹爪；M4 adapter 再组合开合和姿态。
+- 为减小近似 FK 与真实 observation 的偏差，solver 应以当前实测 tip 为锚点，只用 FK 预测角度变化带来的相对位移。
+- 统一结果需要区分“产生可用安全步长”和“已经收敛到容差内”，否则微分 IK 的单步控制会被错误视为失败。
