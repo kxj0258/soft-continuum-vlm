@@ -1,0 +1,22 @@
+action_adapter:
+  delta_xyz_scale: 0.01
+  ik_solver: differential
+  retry_scales: [1.0, 0.5, 0.25]
+  gripper_mapping:
+    normalized_open: -1.0
+    normalized_closed: 1.0
+    runtime_open: 0.0
+    runtime_closed: 1.0
+  orientation:
+    max_abs_grasper_rotation: 3.141592653589793
+    default_policy: hold_current
+    phase_policies:
+      approach: point_to_target
+      pregrasp: point_to_target
+      grasp: align_object_principal_axis
+      transport: hold_current
+      lift: hold_current
+      place: align_place_principal_axis
+      retract: hold_current
+  runtime_aliases:
+    gripper_open_close: grip_command

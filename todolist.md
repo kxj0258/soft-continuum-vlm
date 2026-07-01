@@ -209,7 +209,7 @@ gripper_control ∈ [-1, 1]
 delta_xyz = action[:3] * delta_xyz_scale
 ```
 
-* [ ] 初始建议：
+* [x] 初始建议：
 
 ```yaml
 delta_xyz_scale: 0.01  # 每步最大 1 cm
@@ -250,13 +250,13 @@ gripper_open_close
 
 ### 任务
 
-* [ ] 新增 action adapter：
+* [x] 新增 action adapter：
 
 ```text
 src/soft_continuum_vlm/controllers/feagine_action_adapter.py
 ```
 
-* [ ] 实现接口：
+* [x] 实现接口：
 
 ```python
 class FeagineActionAdapter:
@@ -264,7 +264,7 @@ class FeagineActionAdapter:
         ...
 ```
 
-* [ ] 输入：
+* [x] 输入：
 
 ```text
 action_4d
@@ -275,7 +275,7 @@ current_gripper_state
 task_context
 ```
 
-* [ ] 输出：
+* [x] 输出：
 
 ```text
 section_angles

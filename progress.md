@@ -14,6 +14,9 @@
 - M2 已提交为 `e812d12 Add PCC workspace modeling pipeline`。
 - M3 已增加统一 `IkSolver`/`IkResult`、迭代 PCC IK、单步微分 IK、缩小目标重试、最终保持策略、配置、设计文档和目标测试。
 - M3 测试未运行，验收状态保持待验证。
+- M3 已提交为 `2a622cb Add unified Feagine IK solvers`。
+- M4 已增加 `FeagineActionAdapter`、语义低层命令、runtime alias、线性夹爪映射、任务阶段姿态控制、结构化转换结果、配置、设计文档和目标测试。
+- M4 测试未运行，验收状态保持待验证。
 
 ## 历史进度摘要
 

@@ -1,5 +1,13 @@
 """Controller helpers."""
 
+from soft_continuum_vlm.controllers.feagine_action_adapter import (
+    FeagineActionAdapter,
+    FeagineActionAdapterConfig,
+    FeagineActionConversion,
+    FeagineLowLevelCommand,
+    GrasperOrientationController,
+    LinearGripperMapper,
+)
 from soft_continuum_vlm.controllers.ik import (
     DifferentialIkConfig,
     DifferentialIkSolver,
@@ -16,8 +24,14 @@ from soft_continuum_vlm.controllers.scripted_expert import ScriptedExpert
 __all__ = [
     "DifferentialIkConfig",
     "DifferentialIkSolver",
+    "FeagineActionAdapter",
+    "FeagineActionAdapterConfig",
+    "FeagineActionConversion",
+    "FeagineLowLevelCommand",
+    "GrasperOrientationController",
     "IkResult",
     "IkSolver",
+    "LinearGripperMapper",
     "PccIkConfig",
     "PccIkController",
     "PccIkSolver",

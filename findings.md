@@ -44,3 +44,10 @@
 - 新 solver 应只负责 `target_tip_position + current_section_angles + current_tip_position -> IkResult`，不处理夹爪；M4 adapter 再组合开合和姿态。
 - 为减小近似 FK 与真实 observation 的偏差，solver 应以当前实测 tip 为锚点，只用 FK 预测角度变化带来的相对位移。
 - 统一结果需要区分“产生可用安全步长”和“已经收敛到容差内”，否则微分 IK 的单步控制会被错误视为失败。
+
+## M4 Action Adapter 发现
+
+- 当前 observation 的机械臂状态位于 `observation["robot_state"]`，包含 `tip_pose.position`、`section_angles`、`grip_command` 和 `grasper_rotation`。
+- 当前 runtime 只接受 `grip_command`，而新接口使用语义名 `gripper_open_close`；adapter 需要显式命令对象提供 runtime 别名转换，不能让两个名字在上层混用。
+- 当前 Feagine 约定为 `grip_command=0` 打开、`grip_command=1` 闭合，因此顶层 `[-1, 1]` 应线性映射到 `[0, 1]`。
+- 自主旋转应只读取 task context 和当前状态。默认保持当前角度；approach/grasp 可按目标方向或物体主轴对齐，transport/lift/retract 保持姿态。
